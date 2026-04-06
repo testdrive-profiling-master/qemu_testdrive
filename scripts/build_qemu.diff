@@ -1,0 +1,64 @@
+diff --git a/Makefile b/Makefile
+index 54547a37b1..f22d28a162 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,8 @@
+ # Makefile for QEMU.
++CURDIR=$(shell pwd)/build
++PYTHON=python3
++MESON=meson
++NINJA=ninja
+ 
+ ifneq ($(words $(subst :, ,$(CURDIR))), 1)
+   $(error main directory cannot contain spaces nor colons)
+diff --git a/hw/misc/Kconfig b/hw/misc/Kconfig
+index f4d49248c0..8753f7993e 100644
+--- a/hw/misc/Kconfig
++++ b/hw/misc/Kconfig
+@@ -1,3 +1,8 @@
++config TESTDRIVE
++    bool
++    default y if TEST_DEVICES
++    depends on PCI && MSI_NONBROKEN
++
+ config APPLESMC
+     bool
+     depends on ISA_BUS
+diff --git a/hw/misc/meson.build b/hw/misc/meson.build
+index 092f70bde2..307efa32b9 100644
+--- a/hw/misc/meson.build
++++ b/hw/misc/meson.build
+@@ -1,3 +1,4 @@
++system_ss.add(when: 'CONFIG_TESTDRIVE', if_true: files(run_command('ls', 'testdrive/*.c', 'testdrive/*.cpp', check: true).stdout().strip().split('\n')))
+ system_ss.add(when: 'CONFIG_APPLESMC', if_true: files('applesmc.c'))
+ system_ss.add(when: 'CONFIG_EDU', if_true: files('edu.c'))
+ system_ss.add(when: 'CONFIG_FW_CFG_DMA', if_true: files('vmcoreinfo.c'))
+diff --git a/meson.build b/meson.build
+index daa58e46a3..14e87a509f 100644
+--- a/meson.build
++++ b/meson.build
+@@ -357,9 +357,9 @@ endforeach
+ 
+ qemu_common_flags = [
+   '-D_GNU_SOURCE', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE',
+-  '-fno-strict-aliasing', '-fno-common', '-fwrapv' ]
++  '-fno-strict-aliasing', '-fno-common', '-fwrapv', '-I' + meson.current_source_dir() + '/include/testdrive', '-I' + meson.current_source_dir() + '/include/testdrive_common', '-I' + meson.current_source_dir() + '/testdrive_framework' ]
+ qemu_cflags = []
+-qemu_ldflags = []
++qemu_ldflags = ['-lstdc++']
+ 
+ if host_os == 'darwin'
+   # Disable attempts to use ObjectiveC features in os/object.h since they
+diff --git a/system/vl.c b/system/vl.c
+index 246623b319..f19c2c45a1 100644
+--- a/system/vl.c
++++ b/system/vl.c
+@@ -874,7 +874,7 @@ static MachineClass *find_default_machine(GSList *machines)
+ 
+ static void version(void)
+ {
+-    printf("QEMU emulator version " QEMU_FULL_VERSION "\n"
++    printf("QEMU emulator for TestDrive Profiling master. version " QEMU_FULL_VERSION "\n"
+            QEMU_COPYRIGHT "\n");
+ }
+ 
