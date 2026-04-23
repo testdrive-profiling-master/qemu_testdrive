@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/15/2026 Wed (clonextop@gmail.com)
+// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -448,9 +448,22 @@ bool TestDrive::EnableMSI(int iVectorCount, bool bMaskPerVector)
 	return true;
 }
 
-void TestDrive::SetSystemModule(const char *sFileName)
+bool TestDrive::EnableDisplay(int width, int height, LuaRef disp_address)
 {
-	m_sSystemModulePath = sFileName;
+	if (width && height) {
+		if (!m_pSystem) {
+			LOGW("Can't enable display, you must load your system module first.!");
+			return false;
+		}
+		display.width		= width;
+		display.height		= height;
+		display.byte_stride = display.width * 4;
+		uint64_t addr		= disp_address.isNil() ? m_pSystem->GetMemoryBase() : (uint64_t)disp_address;
+		display.pBuffer		= m_pSystem->GetMemoryPointer(addr);
+	} else {
+		memset(&display, 0, sizeof(TESTDRIVE_DISPLAY));
+	}
+	return true;
 }
 
 bool TestDrive::RunScript(const char *sScriptFileName)
@@ -526,7 +539,8 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 				.beginClass<TestDrive>("TestDrive")
 				.addFunction("CreateBAR", &TestDrive::CreateBAR)
 				.addFunction("EnableMSI", &TestDrive::EnableMSI)
-				.addFunction("SetSystemModule", &TestDrive::SetSystemModule)
+				.addFunction("EnableDisplay", &TestDrive::EnableDisplay)
+				.addFunction("LoadSystemModule", &TestDrive::LoadSystemModule)
 				.endClass()
 				.addFunction("LOGI", __LOGI)
 				.addFunction("LOGE", __LOGE)

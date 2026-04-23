@@ -52,6 +52,7 @@ bool			testdrive_init(void)
 	testdrive_param.pci.class_id	   = GetConfigurationValue("CLASS_ID");
 	testdrive_param.pci.revision	   = GetConfigurationValue("REVISION");
 	static cstring rom_path			   = GetConfiguration("ROM_FILE");
+
 	if (!rom_path.IsEmpty()) {
 		testdrive_param.pci.rom_file = rom_path.c_str();
 	}

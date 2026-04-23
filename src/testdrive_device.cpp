@@ -31,13 +31,13 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/18/2026 Sat (CloneX)
+// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
-TESTDRIVE *testdrive_create(void)
+TESTDRIVE *testdrive_create(void *pdev)
 {
-	return new TestDrive();
+	return new TestDrive(pdev);
 }
 
 void testdrive_destroy(TESTDRIVE *pTestDrive)
@@ -47,42 +47,18 @@ void testdrive_destroy(TESTDRIVE *pTestDrive)
 	}
 }
 
-TestDrive::TestDrive(void)
+TestDrive::TestDrive(void *pdev)
 {
-	m_hSystemImpModule	= NULL;
-	m_pSystem			= NULL;
-	m_pLua				= NULL;
+	m_pdev			   = pdev;
+	m_hSystemImpModule = NULL;
+	m_pSystem		   = NULL;
+	m_pLua			   = NULL;
+	memset(&display, 0, sizeof(TESTDRIVE_DISPLAY));
 	cstring sScriptFile = GetConfiguration("SETUP_SCRIPT");
 
 	// run device setup script
-	if (!sScriptFile.IsEmpty() && RunScript(sScriptFile)) {
-		// open system module
-		m_hSystemImpModule = LoadLibrary(m_sSystemModulePath);
-		if (!m_hSystemImpModule) {
-			LOGE("Can't open simulation module : %s", m_sSystemModulePath.c_str());
-			exit(1);
-		}
-
-		// Create sub-system
-		CREATE_SIMULATION CreateSimulationImplementation =
-			(CREATE_SIMULATION)GetProcAddress(m_hSystemImpModule, "CreateSimulationImplementation");
-		if (CreateSimulationImplementation) {
-			m_pSystem = CreateSimulationImplementation();
-			if (m_pSystem) {
-				// Initialize sub-system
-				if (!m_pSystem->Initialize(NULL)) {
-					SAFE_RELEASE(m_pSystem);
-					LOGE("Can't initialize TestDrive simulation system.");
-					exit(1);
-				}
-			} else {
-				LOGE("Can't create simulation sub-system.");
-				exit(1);
-			}
-		} else {
-			LOGE("Can't find TestDrive simulation creation implementation.");
-			exit(1);
-		}
+	if (!sScriptFile.IsEmpty() && !RunScript(sScriptFile)) {
+		exit(1);
 	}
 }
 
@@ -100,31 +76,78 @@ TestDrive::~TestDrive(void)
 	}
 }
 
-void TestDrive::MemIO(bool bWrite, uint64_t addr, unsigned byte_size, uint64_t &val)
+bool TestDrive::LoadSystemModule(const char *sFileName)
+{
+	SAFE_RELEASE(m_pSystem);
+	if (m_hSystemImpModule) {
+		FreeLibrary(m_hSystemImpModule);
+		m_hSystemImpModule = NULL;
+	}
+
+	// open system module
+	m_hSystemImpModule = LoadLibrary(sFileName);
+	if (!m_hSystemImpModule) {
+		LOGE("Can't open simulation module : %s", sFileName);
+		return false;
+	}
+
+	// Create sub-system
+	CREATE_SIMULATION CreateSimulationImplementation = (CREATE_SIMULATION)GetProcAddress(m_hSystemImpModule, "CreateSimulationImplementation");
+	if (CreateSimulationImplementation) {
+		m_pSystem = CreateSimulationImplementation();
+		if (m_pSystem) {
+			// Initialize sub-system
+			if (!m_pSystem->InitializeSimulation(this)) {
+				SAFE_RELEASE(m_pSystem);
+				LOGE("Can't initialize TestDrive simulation system.");
+				return false;
+			}
+		} else {
+			LOGE("Can't create simulation sub-system.");
+			return false;
+		}
+	} else {
+		LOGE("Can't find TestDrive simulation creation implementation.");
+		return false;
+	}
+	return true;
+}
+
+void TestDrive::MemIO(bool bWrite, uint64_t addr, uint32_t &val)
 {
 	if (m_pSystem) {
-		m_pSystem->io_slave(bWrite, addr, byte_size, (uint32_t *)&val);
+		m_pSystem->io_slave(bWrite, addr, val);
 	}
 }
 
 uint64_t testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned byte_size)
 {
-	uint64_t val = 0xDEADBEEFDEADBEEFULL;
-	((TestDrive *)bar->pTestDrive)->MemIO(false, offset + bar->bind_address, byte_size, val);
+	uint32_t val = 0xFFFFFFFF;
+	if (byte_size == 4) {
+		((TestDrive *)bar->pTestDrive)->MemIO(false, offset + bar->bind_address, val);
+	} else {
+		LOGE("Invalid BAR[%d] read : offset(0x%llX) size(%d)", bar->option.bar_id, offset, byte_size);
+	}
 	return val;
 }
 
 void testdrive_bar_write(TESTDRIVE_PCI_BAR *bar, uint64_t offset, uint64_t val, unsigned byte_size)
 {
-	((TestDrive *)bar->pTestDrive)->MemIO(true, offset + bar->bind_address, byte_size, val);
+	if (byte_size == 4) {
+		((TestDrive *)bar->pTestDrive)->MemIO(true, offset + bar->bind_address, *(uint32_t *)&val);
+	} else {
+		LOGE("Invalid BAR[%d] write : offset(0x%llX) size(%d)", bar->option.bar_id, offset, byte_size);
+	}
+}
+
+bool TestDrive::dma_master(uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite)
+{
+	return testdrive_dma_master(m_pdev, addr, pBuff, byte_size, bWrite);
 }
 
 bool testdrive_display(TESTDRIVE_DISPLAY *pDisplay)
 {
-	pDisplay->pBuffer	  = NULL;
-	pDisplay->width		  = 800;
-	pDisplay->height	  = 600;
-	pDisplay->byte_stride = 800 * 4;
+	pDisplay->pBuffer = NULL;
 
 	return false;
 }

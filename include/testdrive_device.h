@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/20/2026 Mon (clonextop@gmail.com)
+// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -81,7 +81,7 @@ typedef struct {
 extern TESTDRIVE_PARAM testdrive_param;
 
 typedef struct {
-	// NULL dummy structure
+	TESTDRIVE_DISPLAY display;
 } TESTDRIVE;
 
 typedef struct {
@@ -95,22 +95,24 @@ typedef struct {
 } TESTDRIVE_BAR;
 
 #	ifdef __cplusplus
-class TestDrive : public TESTDRIVE
+class TestDrive : public TESTDRIVE, public IVMHost
 {
 public:
-	TestDrive(void);
-	~TestDrive(void);
+	TestDrive(void *pdev);
+	virtual ~TestDrive(void);
 
-	void MemIO(bool bWrite, uint64_t addr, unsigned byte_size, uint64_t &val);
+	void		 MemIO(bool bWrite, uint64_t addr, uint32_t &val);
+	virtual bool dma_master(uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite);
 
 private:
 	bool RunScript(const char *sFileName);
 	bool CreateBAR(const char *address_space, uint64_t byte_size, bool b64bit, bool bPrefetchable, uint64_t bind_address);
 	bool EnableMSI(int iVectorCount, bool bMaskPerVector);
-	void SetSystemModule(const char *sFileName);
+	bool EnableDisplay(int width, int height, LuaRef disp_address);
+	bool LoadSystemModule(const char *sFileName);
 
 protected:
-	cstring						m_sSystemModulePath;
+	void					   *m_pdev; // PCIDevice
 	HMODULE						m_hSystemImpModule;
 	ISystemSim				   *m_pSystem;
 	lua_State				   *m_pLua;
@@ -121,11 +123,12 @@ extern "C" {
 #	endif
 
 bool	   testdrive_init(void);
-TESTDRIVE *testdrive_create(void);
+TESTDRIVE *testdrive_create(void *pdev);
 void	   testdrive_destroy(TESTDRIVE *pTestDrive);
 uint64_t   testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned byte_size);
 void	   testdrive_bar_write(TESTDRIVE_PCI_BAR *bar, uint64_t offset, uint64_t val, unsigned byte_size);
 bool	   testdrive_display(TESTDRIVE_DISPLAY *pDisplay);
+bool	   testdrive_dma_master(void *pdev, uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite);
 
 #	ifdef __cplusplus
 }

@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/20/2026 Mon (clonextop@gmail.com)
+// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -59,7 +59,6 @@ typedef struct {
 	TESTDRIVE	   *pTestDrive;
 	DisplaySurface *pSurface;
 	QemuConsole	   *con;
-	uint32_t		framebuffer[800 * 600 * 4];
 } TESTDRIVE_DEVICE;
 
 DECLARE_INSTANCE_CHECKER(TESTDRIVE_DEVICE, TESTDRIVE_DEV, TESTDRIVE_DEVICE_NAME)
@@ -77,6 +76,17 @@ static const MemoryRegionOps testdrive_mem_ops = {
 		},
 };
 
+bool testdrive_dma_master(void *pdev, uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite)
+{
+	MemTxResult ret;
+	if ((ret = pci_dma_rw((PCIDevice *)pdev, addr, pBuff, byte_size, (DMADirection)bWrite, MEMTXATTRS_UNSPECIFIED)) == MEMTX_OK) {
+		return true;
+	}
+
+	LOGE("testdrive_dma_master : addr(0x%llX) size(%lld) write(%d) - error code(%d)", addr, byte_size, bWrite, ret);
+	return false;
+}
+
 static void testdrive_display_invalidate(void *opaque)
 {
 	printf("invalidated display\n");
@@ -89,9 +99,16 @@ static void testdrive_display_text_update(void *opaque, console_ch_t *chardata)
 static void testdrive_display_update(TESTDRIVE_DEVICE *dev)
 {
 	// qemu_console_resize(dev->con, 800, 600);
-	DisplaySurface *surface = qemu_console_surface(dev->con);
-	memcpy(surface_data(surface), dev->framebuffer, 640 * 480 * 4);
-	dpy_gfx_update(dev->con, 0, 0, 640, 480);
+	// DisplaySurface *surface = qemu_console_surface(dev->con);
+	// memcpy(surface_data(surface), dev->pTestDrive->framebuffer, 640 * 480 * 4);
+	/*
+	static int it = 0;
+
+	for (int i = 0; i < 640 * 480; i++) {
+		dev->pTestDrive->framebuffer[i] = i + it; // XRGB
+	}
+	it += 0x100;
+	dpy_gfx_update(dev->con, 0, 0, 640, 480);*/
 }
 
 static const GraphicHwOps ghwops = {
@@ -104,7 +121,7 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 {
 	TESTDRIVE_DEVICE *dev = TESTDRIVE_DEV(pdev);
 
-	if (!(dev->pTestDrive = testdrive_create())) {
+	if (!(dev->pTestDrive = testdrive_create(pdev))) {
 		LOGE("TestDrive device is not ready.");
 		exit(1);
 	}
@@ -130,17 +147,23 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 
 	// enable bus master : but some guest OS(linux) will turn off this.
 	// pci_default_write_config(pdev, PCI_COMMAND, pci_get_word(pdev->config + PCI_COMMAND) | PCI_COMMAND_MASTER, 2);
-	/*
-		dev->con = graphic_console_init(DEVICE(pdev), 0, &ghwops, dev);
-		qemu_console_resize(dev->con, 640, 480);
-		DisplaySurface *surface = qemu_console_surface(dev->con);
-		for (int i = 0; i < 640 * 480; i++) {
-			dev->framebuffer[i] = i; // XRGB
-		}*/
-	/*
-	dev->pSurface = qemu_create_displaysurface_from(640, 480, PIXMAN_x8r8g8b8, 640 * 4, (uint8_t *)dev->framebuffer);
-	dpy_gfx_replace_surface(dev->con, dev->pSurface);
-	*/
+
+	if (dev->pTestDrive->display.pBuffer) {
+		TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
+		dev->con				 = graphic_console_init(DEVICE(pdev), 0, &ghwops, dev);
+		// qemu_console_resize(dev->con, 640, 480);
+		//  DisplaySurface *surface = qemu_console_surface(dev->con);
+		{ // for test
+			uint32_t *pBuff = (uint32_t *)pDisp->pBuffer;
+			for (int i = 0; i < pDisp->width * pDisp->height; i++) {
+				pBuff[i] = i; // XRGB
+			}
+		}
+
+		dev->pSurface =
+			qemu_create_displaysurface_from(pDisp->width, pDisp->height, PIXMAN_x8r8g8b8, pDisp->byte_stride, (uint8_t *)pDisp->pBuffer);
+		dpy_gfx_replace_surface(dev->con, dev->pSurface);
+	}
 }
 
 static void device_exit(PCIDevice *pdev)
@@ -157,17 +180,16 @@ static void device_exit(PCIDevice *pdev)
 
 static void device_class_init(ObjectClass *class, const void *data)
 {
-	PCIDeviceClass *pc		= PCI_DEVICE_CLASS(class);
-	pc->parent_class.desc	= "TestDrive Device";
-	pc->realize				= device_realize;
-	pc->exit				= device_exit;
-	pc->vendor_id			= testdrive_param.pci.main.vendor_id;
-	pc->device_id			= testdrive_param.pci.main.device_id;
-	pc->class_id			= testdrive_param.pci.class_id;
-	pc->revision			= testdrive_param.pci.revision;
-	pc->subsystem_vendor_id = testdrive_param.pci.sub.vendor_id;
-	pc->subsystem_id		= testdrive_param.pci.sub.device_id;
-	pc->romfile				= testdrive_param.pci.rom_file;
+	PCIDeviceClass *dc		= PCI_DEVICE_CLASS(class);
+	dc->realize				= device_realize;
+	dc->exit				= device_exit;
+	dc->vendor_id			= testdrive_param.pci.main.vendor_id;
+	dc->device_id			= testdrive_param.pci.main.device_id;
+	dc->class_id			= testdrive_param.pci.class_id;
+	dc->revision			= testdrive_param.pci.revision;
+	dc->subsystem_vendor_id = testdrive_param.pci.sub.vendor_id;
+	dc->subsystem_id		= testdrive_param.pci.sub.device_id;
+	dc->romfile				= testdrive_param.pci.rom_file;
 }
 
 static void testdrive_device_register(void)
