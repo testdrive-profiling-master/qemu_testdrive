@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
+// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -448,7 +448,7 @@ bool TestDrive::EnableMSI(int iVectorCount, bool bMaskPerVector)
 	return true;
 }
 
-bool TestDrive::EnableDisplay(int width, int height, LuaRef disp_address)
+bool TestDrive::EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format)
 {
 	if (width && height) {
 		if (!m_pSystem) {
@@ -458,8 +458,17 @@ bool TestDrive::EnableDisplay(int width, int height, LuaRef disp_address)
 		display.width		= width;
 		display.height		= height;
 		display.byte_stride = display.width * 4;
-		uint64_t addr		= disp_address.isNil() ? m_pSystem->GetMemoryBase() : (uint64_t)disp_address;
-		display.pBuffer		= m_pSystem->GetMemoryPointer(addr);
+		if (disp_format.isString()) {
+			if ((display.format = testdrive_display_format(disp_format)) == TESTDRIVE_DISPLAY_FORMAT_NONE) {
+				LOGE("Invalid display format.");
+				memset(&display, 0, sizeof(TESTDRIVE_DISPLAY));
+				return false;
+			}
+		} else {
+			display.format = TESTDRIVE_DISPLAY_FORMAT_X8R8G8B8;
+		}
+		uint64_t addr	= disp_address.isNil() ? m_pSystem->GetMemoryBase() : (uint64_t)disp_address;
+		display.pBuffer = m_pSystem->GetMemoryPointer(addr);
 	} else {
 		memset(&display, 0, sizeof(TESTDRIVE_DISPLAY));
 	}

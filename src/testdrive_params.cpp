@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/20/2026 Mon (clonextop@gmail.com)
+// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -58,4 +58,15 @@ bool			testdrive_init(void)
 	}
 
 	return true;
+}
+
+TESTDRIVE_DISPLAY_FORMAT testdrive_display_format(const char *sFormat)
+{
+	TESTDRIVE_DISPLAY_FORMAT format			 = (TESTDRIVE_DISPLAY_FORMAT)-1;
+	static const char		*__format_list[] = {
+		"A8R8G8B8", "X8R8G8B8", "A8B8G8R8", "X8B8G8R8", "B8G8R8A8", "B8G8R8X8", "R8G8B8A8",
+		"R8G8B8X8", "R8G8B8",	"B8G8R8",	"R5G6B5",	"A1R5G5B5", "X1R5G5B5",
+	};
+	cstring s(sFormat);
+	return (TESTDRIVE_DISPLAY_FORMAT)s.RetrieveTag(__format_list, ARRAY_SIZE(__format_list));
 }

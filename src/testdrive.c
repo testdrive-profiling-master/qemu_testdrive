@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
+// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -58,12 +58,10 @@ typedef struct {
 	} mem[6];
 	TESTDRIVE	   *pTestDrive;
 	DisplaySurface *pSurface;
-	QemuConsole	   *con;
+	QemuConsole	   *console;
 } TESTDRIVE_DEVICE;
 
 DECLARE_INSTANCE_CHECKER(TESTDRIVE_DEVICE, TESTDRIVE_DEV, TESTDRIVE_DEVICE_NAME)
-
-// memory access from device : dma_memory_read() / dma_memory_write()
 
 static const MemoryRegionOps testdrive_mem_ops = {
 	.read		= (uint64_t (*)(void *, hwaddr, unsigned))testdrive_bar_read,
@@ -98,18 +96,20 @@ static void testdrive_display_text_update(void *opaque, console_ch_t *chardata)
 
 static void testdrive_display_update(TESTDRIVE_DEVICE *dev)
 {
-	// qemu_console_resize(dev->con, 800, 600);
-	// DisplaySurface *surface = qemu_console_surface(dev->con);
-	// memcpy(surface_data(surface), dev->pTestDrive->framebuffer, 640 * 480 * 4);
-	/*
-	static int it = 0;
+	TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
 
-	for (int i = 0; i < 640 * 480; i++) {
-		dev->pTestDrive->framebuffer[i] = i + it; // XRGB
+	if (testdrive_display(dev->pTestDrive)) {
+		// qemu_console_resize(dev->console, pDisp->width, pDisp->height);
+		// DisplaySurface *surface = qemu_console_surface(dev->con);
+		// memcpy(surface_data(surface), dev->pTestDrive->framebuffer, 640 * 480 * 4);
+		dpy_gfx_update(dev->console, 0, 0, pDisp->width, pDisp->height);
 	}
-	it += 0x100;
-	dpy_gfx_update(dev->con, 0, 0, 640, 480);*/
 }
+
+const uint32_t g_TESTDRIVE_DISPLAY_FORMAT2PIXMAN[] = {
+	PIXMAN_a8r8g8b8, PIXMAN_x8r8g8b8, PIXMAN_a8b8g8r8, PIXMAN_x8b8g8r8, PIXMAN_b8g8r8a8, PIXMAN_b8g8r8x8, PIXMAN_r8g8b8a8,
+	PIXMAN_r8g8b8x8, PIXMAN_r8g8b8,	  PIXMAN_b8g8r8,   PIXMAN_r5g6b5,	PIXMAN_a1r5g5b5, PIXMAN_x1r5g5b5,
+};
 
 static const GraphicHwOps ghwops = {
 	.invalidate	 = testdrive_display_invalidate,
@@ -150,19 +150,11 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 
 	if (dev->pTestDrive->display.pBuffer) {
 		TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
-		dev->con				 = graphic_console_init(DEVICE(pdev), 0, &ghwops, dev);
-		// qemu_console_resize(dev->con, 640, 480);
-		//  DisplaySurface *surface = qemu_console_surface(dev->con);
-		{ // for test
-			uint32_t *pBuff = (uint32_t *)pDisp->pBuffer;
-			for (int i = 0; i < pDisp->width * pDisp->height; i++) {
-				pBuff[i] = i; // XRGB
-			}
-		}
-
-		dev->pSurface =
-			qemu_create_displaysurface_from(pDisp->width, pDisp->height, PIXMAN_x8r8g8b8, pDisp->byte_stride, (uint8_t *)pDisp->pBuffer);
-		dpy_gfx_replace_surface(dev->con, dev->pSurface);
+		dev->console			 = graphic_console_init(DEVICE(pdev), 0, &ghwops, dev);
+		qemu_console_resize(dev->console, pDisp->width, pDisp->height);
+		dev->pSurface = qemu_create_displaysurface_from(
+			pDisp->width, pDisp->height, g_TESTDRIVE_DISPLAY_FORMAT2PIXMAN[pDisp->format], pDisp->byte_stride, (uint8_t *)pDisp->pBuffer);
+		dpy_gfx_replace_surface(dev->console, dev->pSurface);
 	}
 }
 

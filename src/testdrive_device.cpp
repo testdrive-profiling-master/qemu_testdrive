@@ -145,9 +145,8 @@ bool TestDrive::dma_master(uint64_t addr, void *pBuff, uint64_t byte_size, bool 
 	return testdrive_dma_master(m_pdev, addr, pBuff, byte_size, bWrite);
 }
 
-bool testdrive_display(TESTDRIVE_DISPLAY *pDisplay)
+bool testdrive_display(TESTDRIVE *pTestDrive)
 {
-	pDisplay->pBuffer = NULL;
 
 	return false;
 }
