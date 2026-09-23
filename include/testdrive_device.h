@@ -132,7 +132,7 @@ public:
 
 private:
 	bool RunScript(const char *sFileName);
-	bool CreateBAR(const char *address_space, uint64_t byte_size, bool b64bit, bool bPrefetchable, uint64_t bind_address);
+	bool CreateBAR(const char *address_space, uint64_t byte_size, uint64_t bind_address, LuaRef b64bit, LuaRef bPrefetchable);
 	bool EnableMSI(int iVectorCount, bool bMaskPerVector);
 	bool EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format);
 	bool LoadSystemModule(const char *sFileName);

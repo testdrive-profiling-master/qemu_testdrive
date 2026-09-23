@@ -387,7 +387,7 @@ static void __LOGW(const char *sLog)
 	LOGW(s.c_str());
 }
 
-bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, bool b64bit, bool bPrefetchable, uint64_t bind_address)
+bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, uint64_t bind_address, LuaRef b64bit, LuaRef bPrefetchable)
 {
 	const char		 *__address_space_type[] = {"io", "memory"};
 	TESTDRIVE_PCI_BAR bar					 = {0};
@@ -406,8 +406,8 @@ bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, bool b64bi
 	}
 	bar.pTestDrive			 = this;
 	bar.byte_size			 = byte_size;
-	bar.option.b64bit		 = b64bit;
-	bar.option.bPrefetchable = bPrefetchable;
+	bar.option.b64bit		 = b64bit.isNil() ? false : (bool)b64bit;
+	bar.option.bPrefetchable = bPrefetchable.isNil() ? false : (bool)bPrefetchable;
 	bar.bind_address		 = bind_address;
 
 	if (bar.option.bar_id + (bar.option.b64bit ? 2 : 1) > 6) {
@@ -426,7 +426,7 @@ bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, bool b64bi
 
 	LOGI(
 		"TestDrive.BAR[%d] : Type(%s) byte_size(0x%llX) b64bit(%d) bPrefetchable(%d) bind_address(0x%llX)", bar.option.bar_id,
-		__address_space_type[bar.option.bar_type], byte_size, b64bit, bPrefetchable, bind_address);
+		__address_space_type[bar.option.bar_type], byte_size, bar.option.b64bit, bar.option.bPrefetchable, bind_address);
 
 	if (((byte_size - 1) & bind_address) != 0) {
 		LOGW(
