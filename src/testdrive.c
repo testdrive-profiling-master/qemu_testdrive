@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
+// Rev.  : 9/28/2026 Mon (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -89,12 +89,12 @@ static void testdrive_display_invalidate(void *opaque)
 {
 	printf("invalidated display\n");
 }
-static void testdrive_display_text_update(void *opaque, console_ch_t *chardata)
+static void testdrive_display_text_update(void *opaque, uint32_t *text)
 {
 	printf("updated text\n");
 }
 
-static void testdrive_display_update(TESTDRIVE_DEVICE *dev)
+static bool testdrive_display_update(TESTDRIVE_DEVICE *dev)
 {
 	TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
 
@@ -102,8 +102,9 @@ static void testdrive_display_update(TESTDRIVE_DEVICE *dev)
 		// qemu_console_resize(dev->console, pDisp->width, pDisp->height);
 		// DisplaySurface *surface = qemu_console_surface(dev->con);
 		// memcpy(surface_data(surface), dev->pTestDrive->framebuffer, 640 * 480 * 4);
-		dpy_gfx_update(dev->console, 0, 0, pDisp->width, pDisp->height);
+		qemu_console_update(dev->console, 0, 0, pDisp->width, pDisp->height);
 	}
+	return true;
 }
 
 const uint32_t g_TESTDRIVE_DISPLAY_FORMAT2PIXMAN[] = {
@@ -113,7 +114,7 @@ const uint32_t g_TESTDRIVE_DISPLAY_FORMAT2PIXMAN[] = {
 
 static const GraphicHwOps ghwops = {
 	.invalidate	 = testdrive_display_invalidate,
-	.gfx_update	 = (void (*)(void *))testdrive_display_update,
+	.gfx_update	 = (bool (*)(void *))testdrive_display_update,
 	.text_update = testdrive_display_text_update,
 };
 
@@ -150,11 +151,11 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 
 	if (dev->pTestDrive->display.pBuffer) {
 		TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
-		dev->console			 = graphic_console_init(DEVICE(pdev), 0, &ghwops, dev);
+		dev->console			 = qemu_graphic_console_create(DEVICE(pdev), 0, &ghwops, dev);
 		qemu_console_resize(dev->console, pDisp->width, pDisp->height);
 		dev->pSurface = qemu_create_displaysurface_from(
 			pDisp->width, pDisp->height, g_TESTDRIVE_DISPLAY_FORMAT2PIXMAN[pDisp->format], pDisp->byte_stride, (uint8_t *)pDisp->pBuffer);
-		dpy_gfx_replace_surface(dev->console, dev->pSurface);
+		qemu_console_set_surface(dev->console, dev->pSurface);
 	}
 }
 

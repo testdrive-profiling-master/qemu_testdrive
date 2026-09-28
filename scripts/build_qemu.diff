@@ -12,7 +12,7 @@ index 54547a37b1..f22d28a162 100644
  ifneq ($(words $(subst :, ,$(CURDIR))), 1)
    $(error main directory cannot contain spaces nor colons)
 diff --git a/hw/misc/Kconfig b/hw/misc/Kconfig
-index f4d49248c0..8753f7993e 100644
+index 1543ee6653..d9785271a1 100644
 --- a/hw/misc/Kconfig
 +++ b/hw/misc/Kconfig
 @@ -1,3 +1,8 @@
@@ -25,7 +25,7 @@ index f4d49248c0..8753f7993e 100644
      bool
      depends on ISA_BUS
 diff --git a/hw/misc/meson.build b/hw/misc/meson.build
-index 092f70bde2..307efa32b9 100644
+index 23265f6035..678004494b 100644
 --- a/hw/misc/meson.build
 +++ b/hw/misc/meson.build
 @@ -1,3 +1,4 @@
@@ -34,10 +34,17 @@ index 092f70bde2..307efa32b9 100644
  system_ss.add(when: 'CONFIG_EDU', if_true: files('edu.c'))
  system_ss.add(when: 'CONFIG_FW_CFG_DMA', if_true: files('vmcoreinfo.c'))
 diff --git a/meson.build b/meson.build
-index daa58e46a3..6922c4c3a4 100644
+index 40e3f4ec44..ada6e409cd 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -357,9 +357,9 @@ endforeach
+@@ -1,5 +1,5 @@
+ project('qemu', ['c'], meson_version: '>=1.5.0',
+-        default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++23', 'b_colorout=auto',
++        default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++23', 'b_colorout=auto', 'strip=true',
+                           'b_staticpic=false', 'stdsplit=false', 'optimization=2', 'b_pie=true'] +
+ 
+                           # build.rust_std breaks with older meson, but Rust does not
+@@ -355,9 +355,9 @@ endforeach
  
  qemu_common_flags = [
    '-D_GNU_SOURCE', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE',
@@ -49,7 +56,7 @@ index daa58e46a3..6922c4c3a4 100644
  
  if host_os == 'darwin'
    # Disable attempts to use ObjectiveC features in os/object.h since they
-@@ -710,10 +710,8 @@ warn_flags = [
+@@ -729,10 +729,8 @@ warn_flags = [
    '-Wold-style-declaration',
    '-Wold-style-definition',
    '-Wredundant-decls',
@@ -60,7 +67,7 @@ index daa58e46a3..6922c4c3a4 100644
    '-Wvla',
    '-Wwrite-strings',
  
-@@ -726,6 +724,8 @@ warn_flags = [
+@@ -745,6 +743,8 @@ warn_flags = [
    '-Wno-string-plus-int',
    '-Wno-tautological-type-limit-compare',
    '-Wno-typedef-redefinition',
@@ -70,10 +77,10 @@ index daa58e46a3..6922c4c3a4 100644
  
  if host_os != 'darwin'
 diff --git a/system/vl.c b/system/vl.c
-index 246623b319..f19c2c45a1 100644
+index 061cbdf860..1188185a43 100644
 --- a/system/vl.c
 +++ b/system/vl.c
-@@ -874,7 +874,7 @@ static MachineClass *find_default_machine(GSList *machines)
+@@ -877,7 +877,7 @@ static MachineClass *find_default_machine(GSList *machines)
  
  static void version(void)
  {

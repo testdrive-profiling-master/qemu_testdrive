@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/23/2026 Thu (clonextop@gmail.com)
+// Rev.  : 9/28/2026 Mon (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -147,6 +147,5 @@ bool TestDrive::dma_master(uint64_t addr, void *pBuff, uint64_t byte_size, bool 
 
 bool testdrive_display(TESTDRIVE *pTestDrive)
 {
-
-	return false;
+	return true;
 }

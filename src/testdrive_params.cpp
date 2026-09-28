@@ -31,14 +31,28 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
+// Rev.  : 9/28/2026 Mon (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
 TESTDRIVE_PARAM testdrive_param = {0};
 
-bool			testdrive_init(void)
+#ifdef WIN32
+BOOL WINAPI ConsoleHandler(DWORD signal)
+{ // prevent console's asking to quiet.
+	if (signal == CTRL_C_EVENT || signal == CTRL_BREAK_EVENT) {
+		ExitProcess(0);
+	}
+	return FALSE;
+}
+#endif
+
+bool testdrive_init(void)
 {
+#ifdef WIN32
+	SetConsoleCtrlHandler(ConsoleHandler, TRUE);
+#endif
+
 	// PCI settings
 	testdrive_param.pci.main.vendor_id = GetConfigurationValue("MAIN_VENDOR_ID", 0x1234);
 	if (!testdrive_param.pci.main.vendor_id) {
