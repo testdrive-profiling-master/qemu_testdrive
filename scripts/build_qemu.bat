@@ -22,7 +22,7 @@ if not exist ".qemu\Makefile" (
 	mklink /D /J testdrive ..\..\..\src
 	cd ../../
 	mklink /D /J testdrive_framework %TESTDRIVE_PROFILE:/=\%Common\utils\framework
-	%TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "./configure --target-list=x86_64-softmmu,aarch64-softmmu,riscv64-softmmu,ppc64-softmmu --prefix=%TESTDRIVE_PROFILE%Common/bin/"
+	call %TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "./configure --target-list=x86_64-softmmu,aarch64-softmmu,riscv64-softmmu,ppc64-softmmu --prefix=%TESTDRIVE_PROFILE%Common/bin/qemu/"
 	cd ..
 )
 
@@ -30,5 +30,8 @@ codegen scripts/touch_project.lua
 
 echo *** Build QEMU... ***
 cd .qemu
-%TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "make %*"
+if not exist "%TESTDRIVE_PROFILE%Common/bin/qemu/" (
+	call %TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "mkdir %TESTDRIVE_PROFILE%Common/bin/qemu/"
+)
+call %TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "make %*"
 cd ..
