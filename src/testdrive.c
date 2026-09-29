@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 9/28/2026 Mon (clonextop@gmail.com)
+// Rev.  : 9/29/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -46,8 +46,9 @@
 #include "qemu/main-loop.h" /* iothread mutex */
 #include "qemu/module.h"
 #include "qapi/visitor.h"
-#include "testdrive_device.h"
 #include "ui/console.h"
+#include "system/system.h"
+#include "testdrive_device.h"
 
 #define TESTDRIVE_DEVICE_NAME "testdrive"
 
@@ -59,6 +60,7 @@ typedef struct {
 	TESTDRIVE	   *pTestDrive;
 	DisplaySurface *pSurface;
 	QemuConsole	   *console;
+	Notifier		exit_notifier;
 } TESTDRIVE_DEVICE;
 
 DECLARE_INSTANCE_CHECKER(TESTDRIVE_DEVICE, TESTDRIVE_DEV, TESTDRIVE_DEVICE_NAME)
@@ -118,6 +120,14 @@ static const GraphicHwOps ghwops = {
 	.text_update = testdrive_display_text_update,
 };
 
+static void __qemu_shutdown_callback(Notifier *notifier, void *data)
+{
+	TESTDRIVE_DEVICE *dev = container_of(notifier, TESTDRIVE_DEVICE, exit_notifier);
+	if (dev->pTestDrive) {
+		testdrive_shutdown(dev->pTestDrive);
+	}
+}
+
 static void device_realize(PCIDevice *pdev, Error **errp)
 {
 	TESTDRIVE_DEVICE *dev = TESTDRIVE_DEV(pdev);
@@ -126,6 +136,10 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 		LOGE("TestDrive device is not ready.");
 		exit(1);
 	}
+
+	// register callback of qemu exit.
+	dev->exit_notifier.notify = &__qemu_shutdown_callback;
+	qemu_add_exit_notifier(&dev->exit_notifier);
 
 	// setup BAR#
 	for (int i = 0; i < 6; i++) {

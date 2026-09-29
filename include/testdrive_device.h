@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
+// Rev.  : 9/29/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -127,6 +127,8 @@ public:
 	TestDrive(void *pdev);
 	virtual ~TestDrive(void);
 
+	void		 Shutdown(void);
+
 	void		 MemIO(bool bWrite, uint64_t addr, uint32_t &val);
 	virtual bool dma_master(uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite);
 
@@ -151,6 +153,7 @@ extern "C" {
 bool					 testdrive_init(void);
 TESTDRIVE				*testdrive_create(void *pdev);
 void					 testdrive_destroy(TESTDRIVE *pTestDrive);
+void					 testdrive_shutdown(TESTDRIVE *pTestDrive); // force to shutdown from QEMU
 uint64_t				 testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned byte_size);
 void					 testdrive_bar_write(TESTDRIVE_PCI_BAR *bar, uint64_t offset, uint64_t val, unsigned byte_size);
 bool					 testdrive_display(TESTDRIVE *pTestDrive);

@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 9/28/2026 Mon (clonextop@gmail.com)
+// Rev.  : 9/29/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -44,6 +44,13 @@ void testdrive_destroy(TESTDRIVE *pTestDrive)
 {
 	if (pTestDrive) {
 		delete (TestDrive *)pTestDrive;
+	}
+}
+
+void testdrive_shutdown(TESTDRIVE *pTestDrive)
+{
+	if (pTestDrive) {
+		((TestDrive *)pTestDrive)->Shutdown();
 	}
 }
 
@@ -111,6 +118,13 @@ bool TestDrive::LoadSystemModule(const char *sFileName)
 		return false;
 	}
 	return true;
+}
+
+void TestDrive::Shutdown(void)
+{
+	if (m_pSystem) {
+		SAFE_RELEASE(m_pSystem);
+	}
 }
 
 void TestDrive::MemIO(bool bWrite, uint64_t addr, uint32_t &val)
