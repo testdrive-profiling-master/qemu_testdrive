@@ -5,7 +5,7 @@ index 54547a37b1..f22d28a162 100644
 @@ -1,4 +1,8 @@
  # Makefile for QEMU.
 +CURDIR=$(shell pwd)/build
-+PYTHON=python3
++PYTHON=/ucrt64/bin/python3
 +MESON=meson
 +NINJA=ninja
  
