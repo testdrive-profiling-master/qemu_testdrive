@@ -10,7 +10,7 @@ if not exist ".qemu\Makefile" (
 	codegen scripts/touch_project.lua
 	cd .qemu
 	touch .TestDrive.nosearch
-	git checkout tags/v11.1.1 -b testdrive_qemu
+	git checkout tags/v11.1.2 -b testdrive_qemu
 	git submodule update --init --recursive
 	git apply --ignore-whitespace --whitespace=nowarn ../scripts/build_qemu.diff
 	cd include
