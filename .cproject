@@ -29,6 +29,7 @@
 									<listOptionValue builtIn="false" value="../.qemu/include/testdrive_common"/>
 									<listOptionValue builtIn="false" value="../.qemu/testdrive_framework"/>
 									<listOptionValue builtIn="false" value="&quot;${TESTDRIVE_DIR}include&quot;"/>
+									<listOptionValue builtIn="false" value="../.qemu"/>
 									<listOptionValue builtIn="false" value="../.qemu/include"/>
 									<listOptionValue builtIn="false" value="../.qemu/include/qom/"/>
 								</option>
@@ -42,6 +43,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.base.84110559" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.base">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.1995719386" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../include"/>
+									<listOptionValue builtIn="false" value="../.qemu"/>
 									<listOptionValue builtIn="false" value="../.qemu/include"/>
 									<listOptionValue builtIn="false" value="../.qemu/include/qom/"/>
 								</option>
@@ -88,6 +90,7 @@
 									<listOptionValue builtIn="false" value="../.qemu/include/testdrive_common"/>
 									<listOptionValue builtIn="false" value="../.qemu/testdrive_framework"/>
 									<listOptionValue builtIn="false" value="&quot;${TESTDRIVE_DIR}include&quot;"/>
+									<listOptionValue builtIn="false" value="../.qemu"/>
 									<listOptionValue builtIn="false" value="../.qemu/include"/>
 									<listOptionValue builtIn="false" value="../.qemu/include/qom/"/>
 								</option>
@@ -101,6 +104,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.base.15933187" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.base">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.1164971165" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../include"/>
+									<listOptionValue builtIn="false" value="../.qemu"/>
 									<listOptionValue builtIn="false" value="../.qemu/include"/>
 									<listOptionValue builtIn="false" value="../.qemu/include/qom/"/>
 								</option>

@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index 54547a37b1..f22d28a162 100644
+index 54547a37b1..60a468a34c 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -1,4 +1,8 @@
@@ -69,6 +69,17 @@ index 40e3f4ec44..dcd4d35239 100644
  ]
  
  if host_os != 'darwin'
+diff --git a/subprojects/keycodemapdb.wrap b/subprojects/keycodemapdb.wrap
+index dda7b0e571..3150b1ab1d 100644
+--- a/subprojects/keycodemapdb.wrap
++++ b/subprojects/keycodemapdb.wrap
+@@ -1,4 +1,4 @@
+ [wrap-git]
+-url = https://gitlab.com/qemu-project/keycodemapdb.git
+-revision = f5772a62ec52591ff6870b7e8ef32482371f22c6
++url = https://github.com/testdrive-profiling-master/keycodemapdb.git
++revision = 3e73cb5f5f93a06fa09d3dfac9709cb6d8f77266
+ depth = 1
 diff --git a/system/vl.c b/system/vl.c
 index 061cbdf860..1188185a43 100644
 --- a/system/vl.c
@@ -82,3 +93,72 @@ index 061cbdf860..1188185a43 100644
             QEMU_COPYRIGHT "\n");
  }
  
+diff --git a/ui/sdl2.c b/ui/sdl2.c
+index 1c97d23a47..b62897fe0a 100644
+--- a/ui/sdl2.c
++++ b/ui/sdl2.c
+@@ -80,6 +80,29 @@ static struct sdl2_console *get_scon_from_window(uint32_t window_id)
+     return NULL;
+ }
+ 
++#if defined(_WIN32)
++#include "standard-headers/linux/input-event-codes.h"
++static HHOOK hKeyboardHook = NULL;
++static DWORD __thread_id   = 0;
++static struct sdl2_console *__scon = NULL;
++static LRESULT CALLBACK __KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
++{
++    if (nCode >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) {
++        static DWORD dwKeyTime[2] = {0};
++        KBDLLHOOKSTRUCT*    pKeyBoard   = (KBDLLHOOKSTRUCT*)lParam;
++        DWORD               index       = (pKeyBoard->vkCode == VK_HANGUL) ? 0 : (pKeyBoard->vkCode == VK_HANJA) ? 1 : 0xFF;
++        // for VK_HANGUL, VK_HANJA
++        if(index < 2 && dwKeyTime[index] != pKeyBoard->time && __thread_id == GetWindowThreadProcessId(GetForegroundWindow(), NULL)) {
++            dwKeyTime[index] = pKeyBoard->time;
++            qemu_input_event_send_key_linux(__scon->dcl.con, index ? KEY_HANJA : KEY_HANGEUL, true);
++            return 1;
++        }
++    }
++
++    return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
++}
++#endif
++
+ void sdl2_window_create(struct sdl2_console *scon)
+ {
+     int flags = 0;
+@@ -108,6 +131,22 @@ void sdl2_window_create(struct sdl2_console *scon)
+                                          surface_width(scon->surface),
+                                          surface_height(scon->surface),
+                                          flags);
++#ifdef _WIN32
++    {
++        SDL_SysWMinfo wmInfo;
++        SDL_VERSION(&wmInfo.version);
++        if (SDL_GetWindowWMInfo(scon->real_window, &wmInfo)) {
++            if (wmInfo.subsystem == SDL_SYSWM_WINDOWS) {
++                // Completely block the Korean IME by setting the Windows IME context to NULL.
++                ImmAssociateContext(wmInfo.info.win.window, NULL);
++                __scon          = scon;
++                __thread_id     = GetWindowThreadProcessId(wmInfo.info.win.window, NULL);
++                hKeyboardHook   = SetWindowsHookEx(WH_KEYBOARD_LL, __KeyboardProc, GetModuleHandle(NULL), 0);
++            }
++        }
++    }
++#endif
++
+     if (scon->opengl) {
+         const char *driver = "opengl";
+ 
+@@ -136,6 +175,11 @@ void sdl2_window_create(struct sdl2_console *scon)
+ 
+ void sdl2_window_destroy(struct sdl2_console *scon)
+ {
++    if(hKeyboardHook) {
++        UnhookWindowsHookEx(hKeyboardHook);
++        hKeyboardHook = NULL;
++    }
++    
+     if (!scon->real_window) {
+         return;
+     }
