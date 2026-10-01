@@ -70,15 +70,14 @@ index 40e3f4ec44..dcd4d35239 100644
  
  if host_os != 'darwin'
 diff --git a/subprojects/keycodemapdb.wrap b/subprojects/keycodemapdb.wrap
-index dda7b0e571..3150b1ab1d 100644
+index dda7b0e571..f0f329b808 100644
 --- a/subprojects/keycodemapdb.wrap
 +++ b/subprojects/keycodemapdb.wrap
 @@ -1,4 +1,4 @@
  [wrap-git]
--url = https://gitlab.com/qemu-project/keycodemapdb.git
+ url = https://gitlab.com/qemu-project/keycodemapdb.git
 -revision = f5772a62ec52591ff6870b7e8ef32482371f22c6
-+url = https://github.com/testdrive-profiling-master/keycodemapdb.git
-+revision = 3e73cb5f5f93a06fa09d3dfac9709cb6d8f77266
++revision = 22b8996dba9041874845c7446ce89ec4ae2b713d
  depth = 1
 diff --git a/system/vl.c b/system/vl.c
 index 061cbdf860..1188185a43 100644
