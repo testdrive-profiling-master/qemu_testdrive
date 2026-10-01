@@ -92,8 +92,24 @@ index 061cbdf860..1188185a43 100644
             QEMU_COPYRIGHT "\n");
  }
  
+diff --git a/ui/gtk.c b/ui/gtk.c
+index 7078d89d67..6e2743fd65 100644
+--- a/ui/gtk.c
++++ b/ui/gtk.c
+@@ -229,9 +229,9 @@ static void gd_update_caption(GtkDisplayState *s)
+     int i;
+ 
+     if (qemu_name) {
+-        prefix = g_strdup_printf("QEMU (%s)", qemu_name);
++        prefix = g_strdup_printf("QEMU for TestDrive (%s)", qemu_name);
+     } else {
+-        prefix = g_strdup_printf("QEMU");
++        prefix = g_strdup_printf("QEMU for TestDrive");
+     }
+ 
+     if (s->ptr_owner != NULL &&
 diff --git a/ui/sdl2.c b/ui/sdl2.c
-index 1c97d23a47..b62897fe0a 100644
+index 1c97d23a47..58528e2f8a 100644
 --- a/ui/sdl2.c
 +++ b/ui/sdl2.c
 @@ -80,6 +80,29 @@ static struct sdl2_console *get_scon_from_window(uint32_t window_id)
@@ -161,3 +177,20 @@ index 1c97d23a47..b62897fe0a 100644
      if (!scon->real_window) {
          return;
      }
+@@ -201,12 +245,12 @@ static void sdl_update_caption(struct sdl2_console *scon)
+     }
+ 
+     if (qemu_name) {
+-        snprintf(win_title, sizeof(win_title), "QEMU (%s-%d)%s", qemu_name,
++        snprintf(win_title, sizeof(win_title), "QEMU for TestDrive (%s-%d)%s", qemu_name,
+                  scon->idx, status);
+-        snprintf(icon_title, sizeof(icon_title), "QEMU (%s)", qemu_name);
++        snprintf(icon_title, sizeof(icon_title), "QEMU for TestDrive (%s)", qemu_name);
+     } else {
+-        snprintf(win_title, sizeof(win_title), "QEMU%s", status);
+-        snprintf(icon_title, sizeof(icon_title), "QEMU");
++        snprintf(win_title, sizeof(win_title), "QEMU for TestDrive%s", status);
++        snprintf(icon_title, sizeof(icon_title), "QEMU for TestDrive");
+     }
+ 
+     if (scon->real_window) {
