@@ -109,10 +109,10 @@ index 7078d89d67..6e2743fd65 100644
  
      if (s->ptr_owner != NULL &&
 diff --git a/ui/sdl2.c b/ui/sdl2.c
-index 1c97d23a47..58528e2f8a 100644
+index 1c97d23a47..22c86dabcf 100644
 --- a/ui/sdl2.c
 +++ b/ui/sdl2.c
-@@ -80,6 +80,29 @@ static struct sdl2_console *get_scon_from_window(uint32_t window_id)
+@@ -80,6 +80,43 @@ static struct sdl2_console *get_scon_from_window(uint32_t window_id)
      return NULL;
  }
  
@@ -123,7 +123,7 @@ index 1c97d23a47..58528e2f8a 100644
 +static struct sdl2_console *__scon = NULL;
 +static LRESULT CALLBACK __KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 +{
-+    if (nCode >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) {
++    if (nCode == HC_ACTION && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)) {
 +        static DWORD dwKeyTime[2] = {0};
 +        KBDLLHOOKSTRUCT*    pKeyBoard   = (KBDLLHOOKSTRUCT*)lParam;
 +        DWORD               index       = (pKeyBoard->vkCode == VK_HANGUL) ? 0 : (pKeyBoard->vkCode == VK_HANJA) ? 1 : 0xFF;
@@ -137,12 +137,35 @@ index 1c97d23a47..58528e2f8a 100644
 +
 +    return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
 +}
++
++static void enable_dpi_awareness(void)
++{
++    static HMODULE user32 = NULL;
++    if (!user32) {
++        user32 = GetModuleHandleA("user32.dll");
++        BOOL (WINAPI *setDpiAwarenessCtx)(DPI_AWARENESS_CONTEXT);
++        setDpiAwarenessCtx = (BOOL (WINAPI *)(DPI_AWARENESS_CONTEXT))
++                             GetProcAddress(user32, "SetProcessDpiAwarenessContext");
++        if (setDpiAwarenessCtx) {
++            setDpiAwarenessCtx(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
++        }
++    }
++}
 +#endif
 +
  void sdl2_window_create(struct sdl2_console *scon)
  {
      int flags = 0;
-@@ -108,6 +131,22 @@ void sdl2_window_create(struct sdl2_console *scon)
+@@ -103,11 +140,31 @@ void sdl2_window_create(struct sdl2_console *scon)
+     }
+ #endif
+ 
++#ifdef _WIN32
++    //enable_dpi_awareness();
++#endif
++
+     scon->real_window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED,
+                                          SDL_WINDOWPOS_UNDEFINED,
                                           surface_width(scon->surface),
                                           surface_height(scon->surface),
                                           flags);
@@ -165,7 +188,7 @@ index 1c97d23a47..58528e2f8a 100644
      if (scon->opengl) {
          const char *driver = "opengl";
  
-@@ -136,6 +175,11 @@ void sdl2_window_create(struct sdl2_console *scon)
+@@ -136,6 +193,11 @@ void sdl2_window_create(struct sdl2_console *scon)
  
  void sdl2_window_destroy(struct sdl2_console *scon)
  {
@@ -177,7 +200,7 @@ index 1c97d23a47..58528e2f8a 100644
      if (!scon->real_window) {
          return;
      }
-@@ -201,12 +245,12 @@ static void sdl_update_caption(struct sdl2_console *scon)
+@@ -201,12 +263,12 @@ static void sdl_update_caption(struct sdl2_console *scon)
      }
  
      if (qemu_name) {

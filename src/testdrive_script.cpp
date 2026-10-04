@@ -467,7 +467,7 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 	testdrive_param.pci.bar[bar.option.bar_id] = &m_BARs[bar.option.bar_id];
 
 	LOGI(
-		"TestDrive.BAR[%d] : Type(%s) byte_size(%s) b64bit(%d) bPrefetchable(%d) bind_address(%s)", bar.option.bar_id,
+		"PCIe.BAR[%d] : Type(%s) byte_size(%s) b64bit(%d) bPrefetchable(%d) bind_address(%s)", bar.option.bar_id,
 		__address_space_type[bar.option.bar_type], HEX_STRING(bar.byte_size).c_str(), bar.option.b64bit, bar.option.bPrefetchable,
 		HEX_STRING(bar.bind_address).c_str());
 
@@ -490,12 +490,13 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 bool TestDrive::EnableMSI(int iVectorCount, bool bMaskPerVector)
 {
 	if (iVectorCount < 0 || iVectorCount >= 32) {
-		LOGE("MSI count(%d) is out of range (0~32).", iVectorCount);
+		LOGE("PCIe.MSI count(%d) is out of range (0~32).", iVectorCount);
 		return false;
 	}
 
 	testdrive_param.pci.msi.vector_count	= iVectorCount;
 	testdrive_param.pci.msi.per_vector_mask = bMaskPerVector;
+	LOGI("PCIe.MSI count(%d), Per vector mask(%d).", iVectorCount, bMaskPerVector);
 	return true;
 }
 
