@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 9/29/2026 Tue (clonextop@gmail.com)
+// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -121,6 +121,23 @@ typedef struct {
 } TESTDRIVE_BAR;
 
 #	ifdef __cplusplus
+
+class lua_int64
+{
+public:
+	union {
+		uint64_t m;
+		struct {
+			uint32_t lo, hi;
+		};
+	} value;
+	lua_int64(LuaRef v);
+	lua_int64(uint64_t v);
+	const string	get(void) const;
+	void			set(LuaRef v);
+	static uint64_t GET(LuaRef &v);
+};
+
 class TestDrive : public TESTDRIVE, public IVMHost
 {
 public:
@@ -133,11 +150,14 @@ public:
 	virtual bool dma_master(uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite);
 
 private:
-	bool RunScript(const char *sFileName);
-	bool CreateBAR(const char *address_space, uint64_t byte_size, uint64_t bind_address, LuaRef b64bit, LuaRef bPrefetchable);
-	bool EnableMSI(int iVectorCount, bool bMaskPerVector);
-	bool EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format);
-	bool LoadSystemModule(const char *sFileName);
+	bool	  RunScript(const char *sFileName);
+	bool	  CreateBAR(const char *address_space, LuaRef byte_size, LuaRef bind_address, LuaRef b64bit, LuaRef bPrefetchable);
+	bool	  EnableMSI(int iVectorCount, bool bMaskPerVector);
+	bool	  EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format);
+	bool	  LoadSystemModule(const char *sFileName);
+
+	lua_int64 GetMemoryBase(void);
+	lua_int64 GetMemorySize(void);
 
 protected:
 	void					   *m_pdev; // PCIDevice

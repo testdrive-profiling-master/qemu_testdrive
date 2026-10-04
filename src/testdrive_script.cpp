@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/24/2026 Fri (clonextop@gmail.com)
+// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -366,6 +366,48 @@ public:
 	}
 };
 
+lua_int64::lua_int64(LuaRef v)
+{
+	value.m = GET(v);
+}
+
+lua_int64::lua_int64(uint64_t v)
+{
+	value.m = v;
+}
+
+const string lua_int64::get(void) const
+{
+	return to_string(value.m);
+}
+
+void lua_int64::set(LuaRef v)
+{
+	value.m = GET(v);
+}
+
+uint64_t lua_int64::GET(LuaRef &v)
+{
+	uint64_t out;
+	if (v.isUserdata()) {
+		lua_int64 *pVal = v.cast<lua_int64 *>().valueOr(nullptr);
+		if (pVal) {
+			out = pVal->value.m;
+		} else {
+			LOGE("Invalid int64 : %s", v.tostring());
+			out = 0;
+		}
+	} else if (v.isString()) {
+		out = stoull((const char *)v);
+	} else if (v.isNumber()) {
+		out = (uint32_t)v;
+	} else {
+		LOGE("Nil int64? : %s", v.tostring());
+		out = 0;
+	}
+	return out;
+}
+
 static void __LOGI(const char *sLog)
 {
 	cstring s(sLog);
@@ -387,7 +429,7 @@ static void __LOGW(const char *sLog)
 	LOGW(s.c_str());
 }
 
-bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, uint64_t bind_address, LuaRef b64bit, LuaRef bPrefetchable)
+bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_address, LuaRef b64bit, LuaRef bPrefetchable)
 {
 	const char		 *__address_space_type[] = {"io", "memory"};
 	TESTDRIVE_PCI_BAR bar					 = {0};
@@ -405,10 +447,10 @@ bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, uint64_t b
 		bar.option.bar_id += i.second.option.b64bit ? 2 : 1;
 	}
 	bar.pTestDrive			 = this;
-	bar.byte_size			 = byte_size;
 	bar.option.b64bit		 = b64bit.isNil() ? false : (bool)b64bit;
 	bar.option.bPrefetchable = bPrefetchable.isNil() ? false : (bool)bPrefetchable;
-	bar.bind_address		 = bind_address;
+	bar.byte_size			 = lua_int64::GET(byte_size);
+	bar.bind_address		 = lua_int64::GET(bind_address);
 
 	if (bar.option.bar_id + (bar.option.b64bit ? 2 : 1) > 6) {
 		LOGE("No more available BAR left.");
@@ -425,13 +467,22 @@ bool TestDrive::CreateBAR(const char *space_type, uint64_t byte_size, uint64_t b
 	testdrive_param.pci.bar[bar.option.bar_id] = &m_BARs[bar.option.bar_id];
 
 	LOGI(
-		"TestDrive.BAR[%d] : Type(%s) byte_size(0x%llX) b64bit(%d) bPrefetchable(%d) bind_address(0x%llX)", bar.option.bar_id,
-		__address_space_type[bar.option.bar_type], byte_size, bar.option.b64bit, bar.option.bPrefetchable, bind_address);
+		"TestDrive.BAR[%d] : Type(%s) byte_size(%s) b64bit(%d) bPrefetchable(%d) bind_address(%s)", bar.option.bar_id,
+		__address_space_type[bar.option.bar_type], HEX_STRING(bar.byte_size).c_str(), bar.option.b64bit, bar.option.bPrefetchable,
+		HEX_STRING(bar.bind_address).c_str());
 
-	if (((byte_size - 1) & bind_address) != 0) {
+	if (((bar.byte_size - 1) & bar.bind_address) != 0) {
 		LOGW(
-			"BAR binding address(0x%llX) must be aligned by byte_size(0x%llX).\n    It can only be available on a virtual machine environment.",
-			bind_address, byte_size);
+			"BAR binding address(%s) must be aligned by byte_size(%s).\n    It can only be available on a virtual machine environment.",
+			HEX_STRING(bar.bind_address).c_str(), HEX_STRING(bar.byte_size).c_str());
+	}
+	if (bar.byte_size) { // bar size correction
+		uint64_t correct_bar_size = 1;
+		for (; correct_bar_size < bar.byte_size && correct_bar_size != 0x8000'0000'0000'0000ULL; correct_bar_size <<= 1);
+		if (bar.byte_size != correct_bar_size) {
+			bar.byte_size = correct_bar_size;
+			LOGW("Incorrect BAR size value, we fix this to %s", HEX_STRING(bar.byte_size).c_str());
+		}
 	}
 	return true;
 }
@@ -502,6 +553,25 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 				.addFunction("IsOpen", &TextFile::IsOpen)
 				.addFunction("IsEOF", &TextFile::IsEOF)
 				.endClass()
+				.beginClass<lua_int64>("int64")
+				.addConstructor<void (*)(LuaRef v)>()
+				.addProperty(
+					"lo",
+					[](lua_int64 const *obj) {
+						return obj->value.lo;
+					},
+					[](lua_int64 *obj, uint32_t val) {
+						obj->value.lo = val;
+					})
+				.addProperty(
+					"hi",
+					[](lua_int64 const *obj) {
+						return obj->value.hi;
+					},
+					[](lua_int64 *obj, uint32_t val) {
+						obj->value.hi = val;
+					})
+				.endClass()
 				.beginClass<lua_cstring>("String")
 				.addConstructor<void (*)(LuaRef s)>()
 				.addFunction("Replace", &lua_cstring::Replace)
@@ -550,6 +620,8 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 				.addFunction("EnableMSI", &TestDrive::EnableMSI)
 				.addFunction("EnableDisplay", &TestDrive::EnableDisplay)
 				.addFunction("LoadSystemModule", &TestDrive::LoadSystemModule)
+				.addFunction("GetMemoryBase", &TestDrive::GetMemoryBase)
+				.addFunction("GetMemorySize", &TestDrive::GetMemorySize)
 				.endClass()
 				.addFunction("LOGI", __LOGI)
 				.addFunction("LOGE", __LOGE)

@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/15/2026 Wed (clonextop@gmail.com)
+// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
 //================================================================================
 #include "cstring.cpp"
 #include "TextFile.cpp"
@@ -203,4 +203,14 @@ uint64_t GetConfigurationValue(const char *sName, uint64_t uDefault)
 		}
 	}
 	return uDefault;
+}
+
+string HEX_STRING(uint64_t val)
+{
+	cstring s;
+	s.Format("0x%llX", val);
+	for (int i = s.Length() - 4; i > 2; i -= 4) {
+		s.insert(i, "_");
+	}
+	return s.c_string();
 }

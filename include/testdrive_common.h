@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 4/15/2026 Wed (clonextop@gmail.com)
+// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
 //================================================================================
 #ifndef __QEMU_TESTDRIVE_COMMON_H__
 #define __QEMU_TESTDRIVE_COMMON_H__
@@ -78,6 +78,7 @@ void LOG_Suppress(bool bSuppress = true);
 string	 GetConfiguration(const char *sName, const char *sSection = "TESTDRIVE_DEVICE");
 bool	 GetConfigurationBoolean(const char *sName, bool bDefault = false);
 uint64_t GetConfigurationValue(const char *sName, uint64_t uDefault = 0);
+string	 HEX_STRING(uint64_t val);
 }
 #endif
 #endif //__QEMU_TESTDRIVE_COMMON_H__
