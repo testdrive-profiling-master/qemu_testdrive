@@ -147,7 +147,7 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 	// setup BAR#
 	for (int i = 0; i < 6; i++) {
 		TESTDRIVE_PCI_BAR *bar = testdrive_param.pci.bar[i];
-		if (bar->byte_size) {
+		if (bar) {
 			uint8_t attr = bar->option.bar_type ? PCI_BASE_ADDRESS_SPACE_MEMORY : PCI_BASE_ADDRESS_SPACE_IO;
 			if (bar->option.b64bit)
 				attr |= PCI_BASE_ADDRESS_MEM_TYPE_64;

@@ -507,7 +507,7 @@ bool TestDrive::EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int i
 		LOGE("PCIe.MSI-X out of range bar(%d : 0~5).", iBar);
 		return false;
 	}
-	if (!m_BARs[iBar].byte_size) {
+	if (!testdrive_param.pci.bar[iBar]) {
 		LOGE("PCIe.MSI-X's BAR#%d does not existed..", iBar);
 		return false;
 	}
