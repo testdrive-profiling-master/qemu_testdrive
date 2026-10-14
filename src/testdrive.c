@@ -155,8 +155,7 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 				attr |= PCI_BASE_ADDRESS_MEM_PREFETCH;
 			memory_region_init_io(&dev->mem[bar->option.bar_id].region, OBJECT(dev), &testdrive_mem_ops, bar, bar->name, bar->byte_size);
 			pci_register_bar(pdev, bar->option.bar_id, attr, &dev->mem[bar->option.bar_id].region);
-		} else
-			break;
+		}
 	}
 
 	// setup MSI/MSI-X
