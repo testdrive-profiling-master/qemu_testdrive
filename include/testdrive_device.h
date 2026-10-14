@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
+// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -101,7 +101,12 @@ typedef struct {
 		struct {
 			uint8_t vector_count;
 			bool	per_vector_mask;
-		} msi;
+			struct { // for MSI-X
+				bool		 bEnable;
+				unsigned int iBar;
+				unsigned int iOffset;
+			} extend;
+		} interrupt;
 	} pci;
 } TESTDRIVE_PARAM;
 extern TESTDRIVE_PARAM testdrive_param;
@@ -153,6 +158,7 @@ private:
 	bool	  RunScript(const char *sFileName);
 	bool	  CreateBAR(const char *address_space, LuaRef byte_size, LuaRef bind_address, LuaRef b64bit, LuaRef bPrefetchable);
 	bool	  EnableMSI(int iVectorCount, bool bMaskPerVector);
+	bool	  EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int iBar, unsigned int iOffset);
 	bool	  EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format);
 	bool	  LoadSystemModule(const char *sFileName);
 
@@ -170,14 +176,16 @@ protected:
 extern "C" {
 #	endif
 
-bool					 testdrive_init(void);
-TESTDRIVE				*testdrive_create(void *pdev);
-void					 testdrive_destroy(TESTDRIVE *pTestDrive);
-void					 testdrive_shutdown(TESTDRIVE *pTestDrive); // force to shutdown from QEMU
-uint64_t				 testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned byte_size);
-void					 testdrive_bar_write(TESTDRIVE_PCI_BAR *bar, uint64_t offset, uint64_t val, unsigned byte_size);
-bool					 testdrive_display(TESTDRIVE *pTestDrive);
-bool					 testdrive_dma_master(void *pdev, uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite);
+bool	   testdrive_init(void);
+TESTDRIVE *testdrive_create(void *pdev);
+void	   testdrive_destroy(TESTDRIVE *pTestDrive);
+void	   testdrive_shutdown(TESTDRIVE *pTestDrive); // force to shutdown from QEMU
+uint64_t   testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned byte_size);
+void	   testdrive_bar_write(TESTDRIVE_PCI_BAR *bar, uint64_t offset, uint64_t val, unsigned byte_size);
+bool	   testdrive_display(TESTDRIVE *pTestDrive);
+bool	   testdrive_dma_master(void *pdev, uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite);
+extern void (*testdrive_interrupt_notify)(void *pdev, unsigned int iVector);
+
 TESTDRIVE_DISPLAY_FORMAT testdrive_display_format(const char *sFormat);
 
 #	ifdef __cplusplus

@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
+// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -493,10 +493,34 @@ bool TestDrive::EnableMSI(int iVectorCount, bool bMaskPerVector)
 		LOGE("PCIe.MSI count(%d) is out of range (0~32).", iVectorCount);
 		return false;
 	}
-
-	testdrive_param.pci.msi.vector_count	= iVectorCount;
-	testdrive_param.pci.msi.per_vector_mask = bMaskPerVector;
+	testdrive_param.pci.interrupt.extend.bEnable  = false;
+	testdrive_param.pci.interrupt.vector_count	  = iVectorCount;
+	testdrive_param.pci.interrupt.per_vector_mask = bMaskPerVector;
 	LOGI("PCIe.MSI count(%d), Per vector mask(%d).", iVectorCount, bMaskPerVector);
+
+	return true;
+}
+
+bool TestDrive::EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int iBar, unsigned int iOffset)
+{
+	if (iBar > 5) {
+		LOGE("PCIe.MSI-X out of range bar(%d : 0~5).", iBar);
+		return false;
+	}
+	if (!m_BARs[iBar].byte_size) {
+		LOGE("PCIe.MSI-X's BAR#%d does not existed..", iBar);
+		return false;
+	}
+	if (iVectorCount < 0 || iVectorCount >= 2048) {
+		LOGE("PCIe.MSI-X count(%d) is out of range (0~2048).", iVectorCount);
+		return false;
+	}
+	testdrive_param.pci.interrupt.extend.bEnable  = true;
+	testdrive_param.pci.interrupt.extend.iBar	  = iBar;
+	testdrive_param.pci.interrupt.extend.iOffset  = iOffset;
+	testdrive_param.pci.interrupt.vector_count	  = iVectorCount;
+	testdrive_param.pci.interrupt.per_vector_mask = bMaskPerVector;
+	LOGI("PCIe.MSI-X count(%d), Per vector mask(%d).", iVectorCount, bMaskPerVector);
 	return true;
 }
 
@@ -619,6 +643,7 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 				.beginClass<TestDrive>("TestDrive")
 				.addFunction("CreateBAR", &TestDrive::CreateBAR)
 				.addFunction("EnableMSI", &TestDrive::EnableMSI)
+				.addFunction("EnableMSIX", &TestDrive::EnableMSIX)
 				.addFunction("EnableDisplay", &TestDrive::EnableDisplay)
 				.addFunction("LoadSystemModule", &TestDrive::LoadSystemModule)
 				.addFunction("GetMemoryBase", &TestDrive::GetMemoryBase)

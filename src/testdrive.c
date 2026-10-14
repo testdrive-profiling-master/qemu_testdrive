@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 9/29/2026 Tue (clonextop@gmail.com)
+// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -39,6 +39,7 @@
 #include "qemu/units.h"
 #include "hw/pci/pci.h"
 #include "hw/pci/msi.h"
+#include "hw/pci/msix.h"
 #include "hw/core/qdev-properties.h"
 #include "hw/core/sysbus.h"
 #include "qemu/timer.h"
@@ -75,6 +76,8 @@ static const MemoryRegionOps testdrive_mem_ops = {
 			.max_access_size = 4,
 		},
 };
+
+void (*testdrive_interrupt_notify)(void *pdev, unsigned int iVector) = (void (*)(void *, unsigned int))msi_notify;
 
 bool testdrive_dma_master(void *pdev, uint64_t addr, void *pBuff, uint64_t byte_size, bool bWrite)
 {
@@ -144,7 +147,7 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 	// setup BAR#
 	for (int i = 0; i < 6; i++) {
 		TESTDRIVE_PCI_BAR *bar = testdrive_param.pci.bar[i];
-		if (bar) {
+		if (bar->byte_size) {
 			uint8_t attr = bar->option.bar_type ? PCI_BASE_ADDRESS_SPACE_MEMORY : PCI_BASE_ADDRESS_SPACE_IO;
 			if (bar->option.b64bit)
 				attr |= PCI_BASE_ADDRESS_MEM_TYPE_64;
@@ -152,12 +155,24 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 				attr |= PCI_BASE_ADDRESS_MEM_PREFETCH;
 			memory_region_init_io(&dev->mem[bar->option.bar_id].region, OBJECT(dev), &testdrive_mem_ops, bar, bar->name, bar->byte_size);
 			pci_register_bar(pdev, bar->option.bar_id, attr, &dev->mem[bar->option.bar_id].region);
-		}
+		} else
+			break;
 	}
 
-	// setup MSI
-	if (testdrive_param.pci.msi.vector_count) {
-		msi_init(pdev, 0x50, testdrive_param.pci.msi.vector_count, true, testdrive_param.pci.msi.per_vector_mask, NULL);
+	// setup MSI/MSI-X
+	if (testdrive_param.pci.interrupt.vector_count) {
+		if (testdrive_param.pci.interrupt.extend.bEnable) {
+			MemoryRegion *table_bar = &dev->mem[testdrive_param.pci.interrupt.extend.iBar].region;
+			//@TODO: MSI-X
+			/*
+			msix_init(
+				pdev, testdrive_param.pci.interrupt.vector_count, table_bar, testdrive_param.pci.interrupt.extend.iBar,
+			testdrive_param.pci.interrupt.extend.iOffset, NULL, 0, 0,0x60,NULL);
+			*/
+			testdrive_interrupt_notify = (void (*)(void *, unsigned int))msix_notify;
+		} else {
+			msi_init(pdev, 0x50, testdrive_param.pci.interrupt.vector_count, true, testdrive_param.pci.interrupt.per_vector_mask, NULL);
+		}
 	}
 
 	// enable bus master : but some guest OS(linux) will turn off this.
@@ -176,8 +191,13 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 static void device_exit(PCIDevice *pdev)
 {
 	TESTDRIVE_DEVICE *dev = TESTDRIVE_DEV(pdev);
-	if (testdrive_param.pci.msi.vector_count) {
-		msi_uninit(pdev);
+	if (testdrive_param.pci.interrupt.vector_count) {
+		if (testdrive_param.pci.interrupt.extend.bEnable) {
+			//@TODO: MSI-X
+			// msix_uninit(pdev);
+		} else {
+			msi_uninit(pdev);
+		}
 	}
 	if (dev->pTestDrive) {
 		testdrive_destroy(dev->pTestDrive);

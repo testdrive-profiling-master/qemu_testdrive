@@ -31,9 +31,14 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
+// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
+
+static void __ISR__(int iVector, void *pdev)
+{
+	testdrive_interrupt_notify(pdev, iVector);
+}
 
 TESTDRIVE *testdrive_create(void *pdev)
 {
@@ -109,6 +114,9 @@ bool TestDrive::LoadSystemModule(const char *sFileName)
 				LOGE("Can't initialize TestDrive simulation system.");
 				return false;
 			}
+
+			m_pSystem->RegisterInterruptService((INTRRUPT_SERVICE)__ISR__, m_pdev);
+			m_pSystem->EnableInterrupt(true);
 		} else {
 			LOGE("Can't create simulation sub-system.");
 			return false;
