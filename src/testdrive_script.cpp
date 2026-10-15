@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
+// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -467,14 +467,15 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 	testdrive_param.pci.bar[bar.option.bar_id] = &m_BARs[bar.option.bar_id];
 
 	LOGI(
-		"PCIe.BAR[%d] : Type(%s) byte_size(%s) b64bit(%d) bPrefetchable(%d) bind_address(%s)", bar.option.bar_id,
-		__address_space_type[bar.option.bar_type], HEX_STRING(bar.byte_size).c_str(), bar.option.b64bit, bar.option.bPrefetchable,
-		HEX_STRING(bar.bind_address).c_str());
+		"PCIe.BAR[%d] : Type(%s) byte_size(%s:%s) b64bit(%d) bPrefetchable(%d) bind_address(%s)", bar.option.bar_id,
+		__address_space_type[bar.option.bar_type], HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str(), bar.option.b64bit,
+		bar.option.bPrefetchable, HEX_STRING(bar.bind_address).c_str());
 
 	if (((bar.byte_size - 1) & bar.bind_address) != 0) {
 		LOGW(
-			"BAR binding address(%s) must be aligned by byte_size(%s).\n    It can only be available on a virtual machine environment.",
-			HEX_STRING(bar.bind_address).c_str(), HEX_STRING(bar.byte_size).c_str());
+			"PCIe.BAR[%d] : binding address(%s) must be aligned by byte_size(%s:%s).\n    It can only be available on a virtual machine "
+			"environment.",
+			bar.option.bar_id, HEX_STRING(bar.bind_address).c_str(), HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str());
 	}
 	if (bar.byte_size) { // bar size correction
 		uint64_t correct_bar_size = 1;

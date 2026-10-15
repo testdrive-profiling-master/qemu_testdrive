@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/4/2026 Sun (clonextop@gmail.com)
+// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "cstring.cpp"
 #include "TextFile.cpp"
@@ -213,4 +213,47 @@ string HEX_STRING(uint64_t val)
 		s.insert(i, "_");
 	}
 	return s.c_string();
+}
+
+string BYTE_STRING(uint64_t val)
+{
+	bool	bShown = false;
+	cstring sSize;
+
+	if (val >= 1024 * 1024 * 1024) {
+		uint64_t b_size = val / (1024 * 1024 * 1024);
+		val -= b_size * (1024 * 1024 * 1024);
+		sSize.AppendFormat("%lldGB", b_size);
+		bShown = true;
+	}
+
+	if (val >= 1024 * 1024) {
+		uint64_t b_size = val / (1024 * 1024);
+		val -= b_size * (1024 * 1024);
+
+		if (bShown)
+			sSize += " ";
+
+		sSize.AppendFormat("%lldMB", b_size);
+		bShown = true;
+	}
+
+	if (val >= 1024) {
+		uint64_t b_size = val / (1024);
+		val -= b_size * (1024);
+
+		if (bShown)
+			sSize += " ";
+
+		sSize.AppendFormat("%lldKB", b_size);
+		bShown = true;
+	}
+
+	if (val) {
+		if (bShown)
+			sSize += " ";
+
+		sSize.AppendFormat("%lld Byte", val);
+	}
+	return sSize.c_string();
 }
