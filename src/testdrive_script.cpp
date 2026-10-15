@@ -657,7 +657,8 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 				.addFunction("TestDriveDevice", std::function<TestDrive *(void)>([](void) -> TestDrive * {
 								 return __pTestDrive;
 							 }))
-				.addFunction("GetConfiguration", &GetConfiguration);
+				.addFunction("GetConfiguration", &GetConfiguration)
+				.addFunction("SetDpiAwareness", &SetDpiAwareness);
 		} else {
 			LOGE("Can't create Lua engine.");
 			return false;

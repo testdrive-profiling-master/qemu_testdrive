@@ -263,3 +263,36 @@ const char *BOOL_STRING(bool bBool)
 	static const char *__sBool[] = {"false", "true"};
 	return __sBool[bBool ? 1 : 0];
 }
+
+bool SetDpiAwareness(const char *mode_id)
+{
+	if (mode_id) {
+#ifdef WIN32
+		static HMODULE					   user32			 = NULL;
+		static const char				  *__tags[]			 = {"unaware", "system_aware", "per_monitor_aware", NULL};
+		static const DPI_AWARENESS_CONTEXT __awareness_val[] = {
+			DPI_AWARENESS_CONTEXT_UNAWARE, DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2};
+		int iMode;
+
+		if (!user32) {
+			user32 = GetModuleHandle("user32.dll");
+		}
+		{
+			cstring sMode(mode_id);
+			iMode = sMode.RetrieveTag(__tags);
+
+			if (iMode < 0) {
+				LOGW("Invalid SetDpiAwareness mode : %s", mode_id);
+				return false;
+			}
+		}
+		BOOL(WINAPI * setDpiAwarenessCtx)(DPI_AWARENESS_CONTEXT);
+		setDpiAwarenessCtx = (BOOL(WINAPI *)(DPI_AWARENESS_CONTEXT))GetProcAddress(user32, "SetProcessDpiAwarenessContext");
+		if (setDpiAwarenessCtx) {
+			setDpiAwarenessCtx(__awareness_val[iMode]);
+			return true;
+		}
+#endif
+	}
+	return false;
+}

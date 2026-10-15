@@ -81,6 +81,7 @@ uint64_t	GetConfigurationValue(const char *sName, uint64_t uDefault = 0);
 string		HEX_STRING(uint64_t val);
 string		BYTE_STRING(uint64_t ulSize);
 const char *BOOL_STRING(bool bBool);
+bool		SetDpiAwareness(const char *mode_id);
 }
 #endif
 #endif //__QEMU_TESTDRIVE_COMMON_H__
