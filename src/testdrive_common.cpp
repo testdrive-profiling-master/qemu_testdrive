@@ -257,3 +257,9 @@ string BYTE_STRING(uint64_t val)
 	}
 	return sSize.c_string();
 }
+
+const char *BOOL_STRING(bool bBool)
+{
+	static const char *__sBool[] = {"false", "true"};
+	return __sBool[bBool ? 1 : 0];
+}

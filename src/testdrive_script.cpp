@@ -467,15 +467,15 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 	testdrive_param.pci.bar[bar.option.bar_id] = &m_BARs[bar.option.bar_id];
 
 	LOGI(
-		"PCIe.BAR[%d] : Type(%s) byte_size(%s:%s) b64bit(%d) bPrefetchable(%d) bind_address(%s)", bar.option.bar_id,
-		__address_space_type[bar.option.bar_type], HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str(), bar.option.b64bit,
-		bar.option.bPrefetchable, HEX_STRING(bar.bind_address).c_str());
+		"PCIe.BAR[%d] : Type(%s), size(%s:%s), b64bit(%s), bPrefetchable(%s), bind_address(%s)", bar.option.bar_id,
+		__address_space_type[bar.option.bar_type], HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str(),
+		BOOL_STRING(bar.option.b64bit), BOOL_STRING(bar.option.bPrefetchable), HEX_STRING(bar.bind_address).c_str());
 
 	if (((bar.byte_size - 1) & bar.bind_address) != 0) {
 		LOGW(
-			"PCIe.BAR[%d] : binding address(%s) must be aligned by byte_size(%s:%s).\n    It can only be available on a virtual machine "
-			"environment.",
-			bar.option.bar_id, HEX_STRING(bar.bind_address).c_str(), HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str());
+			"PCIe.BAR[%d] : binding address(%s) must be aligned by size(%s:%s).", bar.option.bar_id, HEX_STRING(bar.bind_address).c_str(),
+			HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str());
+		LOGW("@0              It can only be available on a virtual machine environment.");
 	}
 	if (bar.byte_size) { // bar size correction
 		uint64_t correct_bar_size = 1;
@@ -497,7 +497,7 @@ bool TestDrive::EnableMSI(int iVectorCount, bool bMaskPerVector)
 	testdrive_param.pci.interrupt.extend.bEnable  = false;
 	testdrive_param.pci.interrupt.vector_count	  = iVectorCount;
 	testdrive_param.pci.interrupt.per_vector_mask = bMaskPerVector;
-	LOGI("PCIe.MSI count(%d), Per vector mask(%d).", iVectorCount, bMaskPerVector);
+	LOGI("PCIe.MSI count(%d), Per vector mask(%s).", iVectorCount, BOOL_STRING(bMaskPerVector));
 
 	return true;
 }
@@ -521,7 +521,7 @@ bool TestDrive::EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int i
 	testdrive_param.pci.interrupt.extend.iOffset  = iOffset;
 	testdrive_param.pci.interrupt.vector_count	  = iVectorCount;
 	testdrive_param.pci.interrupt.per_vector_mask = bMaskPerVector;
-	LOGI("PCIe.MSI-X count(%d), Per vector mask(%d).", iVectorCount, bMaskPerVector);
+	LOGI("PCIe.MSI-X count(%d), Per vector mask(%s).", iVectorCount, BOOL_STRING(bMaskPerVector));
 	return true;
 }
 
@@ -647,6 +647,7 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 				.addFunction("EnableMSIX", &TestDrive::EnableMSIX)
 				.addFunction("EnableDisplay", &TestDrive::EnableDisplay)
 				.addFunction("LoadSystemModule", &TestDrive::LoadSystemModule)
+				.addFunction("GetDescription", &TestDrive::GetDescription)
 				.addFunction("GetMemoryBase", &TestDrive::GetMemoryBase)
 				.addFunction("GetMemorySize", &TestDrive::GetMemorySize)
 				.endClass()

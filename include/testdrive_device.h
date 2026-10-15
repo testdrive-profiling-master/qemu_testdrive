@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
+// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -162,6 +162,7 @@ private:
 	bool	  EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format);
 	bool	  LoadSystemModule(const char *sFileName);
 
+	string	  GetDescription(void);
 	lua_int64 GetMemoryBase(void);
 	lua_int64 GetMemorySize(void);
 

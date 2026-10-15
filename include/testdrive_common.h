@@ -75,11 +75,12 @@ bool	   IsFileExist(const char *sFileName);
 void LOG_Suppress(bool bSuppress = true);
 
 // ini section
-string	 GetConfiguration(const char *sName, const char *sSection = "TESTDRIVE_DEVICE");
-bool	 GetConfigurationBoolean(const char *sName, bool bDefault = false);
-uint64_t GetConfigurationValue(const char *sName, uint64_t uDefault = 0);
-string	 HEX_STRING(uint64_t val);
-string	 BYTE_STRING(uint64_t ulSize);
+string		GetConfiguration(const char *sName, const char *sSection = "TESTDRIVE_DEVICE");
+bool		GetConfigurationBoolean(const char *sName, bool bDefault = false);
+uint64_t	GetConfigurationValue(const char *sName, uint64_t uDefault = 0);
+string		HEX_STRING(uint64_t val);
+string		BYTE_STRING(uint64_t ulSize);
+const char *BOOL_STRING(bool bBool);
 }
 #endif
 #endif //__QEMU_TESTDRIVE_COMMON_H__

@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
+// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -126,6 +126,11 @@ bool TestDrive::LoadSystemModule(const char *sFileName)
 		return false;
 	}
 	return true;
+}
+
+string TestDrive::GetDescription(void)
+{
+	return m_pSystem->GetDescription();
 }
 
 lua_int64 TestDrive::GetMemoryBase(void)
