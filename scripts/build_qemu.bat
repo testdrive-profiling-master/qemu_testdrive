@@ -35,3 +35,7 @@ if not exist "%TESTDRIVE_PROFILE%Common/bin/qemu/" (
 )
 call %TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "make %*"
 cd ..
+
+if not exist "%TESTDRIVE_PROFILE%Common/bin/qemu/share/OVMF.fd" (
+	cp -f bios/* "%TESTDRIVE_PROFILE%Common/bin/qemu/share/"
+)
