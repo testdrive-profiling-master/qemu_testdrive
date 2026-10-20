@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
+// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -42,6 +42,7 @@ typedef struct {
 	void	*pTestDrive; // TestDrive
 	uint64_t byte_size;
 	uint64_t bind_address;
+	uint8_t *pMem; // direct access to memory
 	char	 name[32];
 	union {
 		uint32_t m;

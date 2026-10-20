@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
+// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -451,6 +451,7 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 	bar.option.bPrefetchable = bPrefetchable.isNil() ? false : (bool)bPrefetchable;
 	bar.byte_size			 = lua_int64::GET(byte_size);
 	bar.bind_address		 = lua_int64::GET(bind_address);
+	bar.pMem				 = NULL;
 
 	if (bar.option.bar_id + (bar.option.b64bit ? 2 : 1) > 6) {
 		LOGE("No more available BAR left.");
@@ -462,9 +463,6 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 		sBarName.Format("testdrive_bar%d", bar.option.bar_id);
 		strcpy(bar.name, sBarName.c_str());
 	}
-
-	m_BARs[bar.option.bar_id]				   = bar;
-	testdrive_param.pci.bar[bar.option.bar_id] = &m_BARs[bar.option.bar_id];
 
 	LOGI(
 		"PCIe.BAR[%d] : Type(%s), size(%s:%s), b64bit(%s), bPrefetchable(%s), bind_address(%s)", bar.option.bar_id,
@@ -485,6 +483,17 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 			LOGW("Incorrect BAR size value, we fix this to %s", HEX_STRING(bar.byte_size).c_str());
 		}
 	}
+
+	// set direct access to device memory
+	if (m_pSystem && (bar.bind_address >= m_pSystem->GetMemoryBase()) &&
+		(bar.bind_address + bar.byte_size) <= (m_pSystem->GetMemoryBase() + m_pSystem->GetMemorySize())) {
+		bar.pMem = (uint8_t *)m_pSystem->GetMemoryPointer(bar.bind_address);
+	}
+
+	// final setting up
+	m_BARs[bar.option.bar_id]				   = bar;
+	testdrive_param.pci.bar[bar.option.bar_id] = &m_BARs[bar.option.bar_id];
+
 	return true;
 }
 

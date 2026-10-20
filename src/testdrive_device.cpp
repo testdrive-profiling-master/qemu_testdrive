@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/15/2026 Thu (clonextop@gmail.com)
+// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -167,7 +167,9 @@ void TestDrive::MemIO(bool bWrite, uint64_t addr, uint32_t &val)
 uint64_t testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned byte_size)
 {
 	uint32_t val = 0xFFFFFFFF;
-	if (byte_size == 4) {
+	if (bar->pMem) {
+		memcpy(&val, bar->pMem + offset, byte_size);
+	} else if (byte_size == 4) {
 		((TestDrive *)bar->pTestDrive)->MemIO(false, offset + bar->bind_address, val);
 	} else {
 		LOGE("Invalid BAR[%d] read : offset(0x%llX) size(%d)", bar->option.bar_id, offset, byte_size);
@@ -177,7 +179,9 @@ uint64_t testdrive_bar_read(TESTDRIVE_PCI_BAR *bar, uint64_t offset, unsigned by
 
 void testdrive_bar_write(TESTDRIVE_PCI_BAR *bar, uint64_t offset, uint64_t val, unsigned byte_size)
 {
-	if (byte_size == 4) {
+	if (bar->pMem) {
+		memcpy(bar->pMem + offset, &val, byte_size);
+	} else if (byte_size == 4) {
 		((TestDrive *)bar->pTestDrive)->MemIO(true, offset + bar->bind_address, *(uint32_t *)&val);
 	} else {
 		LOGE("Invalid BAR[%d] write : offset(0x%llX) size(%d)", bar->option.bar_id, offset, byte_size);

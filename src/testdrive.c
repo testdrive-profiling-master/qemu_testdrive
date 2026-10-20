@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/14/2026 Wed (clonextop@gmail.com)
+// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -92,11 +92,11 @@ bool testdrive_dma_master(void *pdev, uint64_t addr, void *pBuff, uint64_t byte_
 
 static void testdrive_display_invalidate(void *opaque)
 {
-	printf("invalidated display\n");
+	LOGI("testdrive_display_invalidate()\n");
 }
 static void testdrive_display_text_update(void *opaque, uint32_t *text)
 {
-	printf("updated text\n");
+	LOGI("testdrive_display_text_update()\n");
 }
 
 static bool testdrive_display_update(TESTDRIVE_DEVICE *dev)
@@ -104,10 +104,19 @@ static bool testdrive_display_update(TESTDRIVE_DEVICE *dev)
 	TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
 
 	if (testdrive_display(dev->pTestDrive)) {
-		// qemu_console_resize(dev->console, pDisp->width, pDisp->height);
-		// DisplaySurface *surface = qemu_console_surface(dev->con);
-		// memcpy(surface_data(surface), dev->pTestDrive->framebuffer, 640 * 480 * 4);
-		qemu_console_update(dev->console, 0, 0, pDisp->width, pDisp->height);
+		DisplaySurface *qemu_surface = qemu_console_surface(dev->console);
+
+		int				width  = surface_width(qemu_surface);
+		int				height = surface_height(qemu_surface);
+		if ((width != pDisp->width) || (height != pDisp->height)) {
+			pDisp->width  = width;
+			pDisp->height = height;
+			qemu_console_resize(dev->console, width, height);
+			LOGI("Display resolution is changed : %dx%d\n", width, height);
+		}
+
+		memcpy(surface_data(qemu_surface), pDisp->pBuffer, width * height * 4);
+		qemu_console_update(dev->console, 0, 0, width, height);
 	}
 	return true;
 }
