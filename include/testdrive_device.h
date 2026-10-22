@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
+// Rev.  : 10/22/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_common.h"
 #ifndef __QEMU_TESTDRIVE_DEVICE_H__
@@ -105,7 +105,8 @@ typedef struct {
 			struct { // for MSI-X
 				bool		 bEnable;
 				unsigned int iBar;
-				unsigned int iOffset;
+				unsigned int offset_table;
+				unsigned int offset_pba;
 			} extend;
 		} interrupt;
 	} pci;
@@ -159,7 +160,7 @@ private:
 	bool	  RunScript(const char *sFileName);
 	bool	  CreateBAR(const char *address_space, LuaRef byte_size, LuaRef bind_address, LuaRef b64bit, LuaRef bPrefetchable);
 	bool	  EnableMSI(int iVectorCount, bool bMaskPerVector);
-	bool	  EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int iBar, unsigned int iOffset);
+	bool	  EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int iBar, unsigned int iOffset_table, unsigned int iOffset_pba);
 	bool	  EnableDisplay(int width, int height, LuaRef disp_address, LuaRef disp_format);
 	bool	  LoadSystemModule(const char *sFileName);
 

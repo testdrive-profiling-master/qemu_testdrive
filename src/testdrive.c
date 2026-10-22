@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
+// Rev.  : 10/22/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include <stdbool.h>
 #include "qemu/osdep.h"
@@ -170,21 +170,26 @@ static void device_realize(PCIDevice *pdev, Error **errp)
 	// setup MSI/MSI-X
 	if (testdrive_param.pci.interrupt.vector_count) {
 		if (testdrive_param.pci.interrupt.extend.bEnable) {
-			MemoryRegion *table_bar = &dev->mem[testdrive_param.pci.interrupt.extend.iBar].region;
+			MemoryRegion *bar = &dev->mem[testdrive_param.pci.interrupt.extend.iBar].region;
 			//@TODO: MSI-X
-			/*
-			msix_init(
-				pdev, testdrive_param.pci.interrupt.vector_count, table_bar, testdrive_param.pci.interrupt.extend.iBar,
-			testdrive_param.pci.interrupt.extend.iOffset, NULL, 0, 0,0x60,NULL);
-			*/
+			Error *err = NULL;
+			if (msix_init(
+					pdev, testdrive_param.pci.interrupt.vector_count,												   // number of MSI-X count
+					bar, testdrive_param.pci.interrupt.extend.iBar, testdrive_param.pci.interrupt.extend.offset_table, // table
+					bar, testdrive_param.pci.interrupt.extend.iBar, testdrive_param.pci.interrupt.extend.offset_pba,   // PBA
+					0, &err) < 0) {
+				error_propagate(errp, err);
+				LOGE("MSI-X initialization error.\n");
+				return;
+			}
 			testdrive_interrupt_notify = (void (*)(void *, unsigned int))msix_notify;
 		} else {
 			msi_init(pdev, 0x50, testdrive_param.pci.interrupt.vector_count, true, testdrive_param.pci.interrupt.per_vector_mask, NULL);
 		}
 	}
 
-	// enable bus master : but some guest OS(linux) will turn off this.
-	// pci_default_write_config(pdev, PCI_COMMAND, pci_get_word(pdev->config + PCI_COMMAND) | PCI_COMMAND_MASTER, 2);
+	// enable bus master : but some guest OS(linux) will turn off this at start-up.
+	pci_set_word(pdev->config + PCI_COMMAND, pci_get_word(pdev->config + PCI_COMMAND) | PCI_COMMAND_MASTER);
 
 	if (dev->pTestDrive->display.pBuffer) {
 		TESTDRIVE_DISPLAY *pDisp = &dev->pTestDrive->display;
@@ -201,8 +206,8 @@ static void device_exit(PCIDevice *pdev)
 	TESTDRIVE_DEVICE *dev = TESTDRIVE_DEV(pdev);
 	if (testdrive_param.pci.interrupt.vector_count) {
 		if (testdrive_param.pci.interrupt.extend.bEnable) {
-			//@TODO: MSI-X
-			// msix_uninit(pdev);
+			MemoryRegion *bar = &dev->mem[testdrive_param.pci.interrupt.extend.iBar].region;
+			msix_uninit(pdev, bar, bar);
 		} else {
 			msi_uninit(pdev);
 		}

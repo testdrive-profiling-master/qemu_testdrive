@@ -511,7 +511,7 @@ bool TestDrive::EnableMSI(int iVectorCount, bool bMaskPerVector)
 	return true;
 }
 
-bool TestDrive::EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int iBar, unsigned int iOffset)
+bool TestDrive::EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int iBar, unsigned int iOffset_table, unsigned int iOffset_pba)
 {
 	if (iBar > 5) {
 		LOGE("PCIe.MSI-X out of range bar(%d : 0~5).", iBar);
@@ -525,11 +525,12 @@ bool TestDrive::EnableMSIX(int iVectorCount, bool bMaskPerVector, unsigned int i
 		LOGE("PCIe.MSI-X count(%d) is out of range (0~2048).", iVectorCount);
 		return false;
 	}
-	testdrive_param.pci.interrupt.extend.bEnable  = true;
-	testdrive_param.pci.interrupt.extend.iBar	  = iBar;
-	testdrive_param.pci.interrupt.extend.iOffset  = iOffset;
-	testdrive_param.pci.interrupt.vector_count	  = iVectorCount;
-	testdrive_param.pci.interrupt.per_vector_mask = bMaskPerVector;
+	testdrive_param.pci.interrupt.extend.bEnable	  = true;
+	testdrive_param.pci.interrupt.extend.iBar		  = iBar;
+	testdrive_param.pci.interrupt.extend.offset_table = iOffset_table;
+	testdrive_param.pci.interrupt.extend.offset_pba	  = iOffset_pba;
+	testdrive_param.pci.interrupt.vector_count		  = iVectorCount;
+	testdrive_param.pci.interrupt.per_vector_mask	  = bMaskPerVector;
 	LOGI("PCIe.MSI-X count(%d), Per vector mask(%s).", iVectorCount, BOOL_STRING(bMaskPerVector));
 	return true;
 }
