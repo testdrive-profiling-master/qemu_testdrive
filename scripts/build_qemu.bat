@@ -29,6 +29,8 @@ if not exist ".qemu\Makefile" (
 codegen scripts/touch_project.lua
 
 echo *** Build QEMU... ***
+set LANG=en_US.UTF-8
+set LC_ALL=en_US.UTF-8
 cd .qemu
 if not exist "%TESTDRIVE_PROFILE%Common/bin/qemu/" (
 	call %TESTDRIVE_DIR%bin\msys64\msys2_shell.cmd -defterm -here -no-start -ucrt64 -c "mkdir %TESTDRIVE_PROFILE%Common/bin/qemu/"

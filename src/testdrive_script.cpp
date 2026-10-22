@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/20/2026 Tue (clonextop@gmail.com)
+// Rev.  : 10/22/2026 Thu (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -682,7 +682,6 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 		const char *sError = luaL_checkstring(m_pLua, -1);
 		LOGE("Error on running script : %s", sError);
 		lua_pop(m_pLua, 1); // pop out error message
-							// return false;
 		return false;
 	}
 	return true;
