@@ -478,7 +478,7 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 		LOGW(
 			"PCIe.BAR[%d] : binding address(%s) must be aligned by size(%s:%s).", bar.option.bar_id, HEX_STRING(bar.bind_address).c_str(),
 			HEX_STRING(bar.byte_size).c_str(), BYTE_STRING(bar.byte_size).c_str());
-		LOGW("@0              It can only be available on a virtual machine environment.");
+		LOGW("@0                  It can only be available on a virtual machine environment.\n");
 	}
 	if (bar.byte_size) { // bar size correction
 		uint64_t correct_bar_size = 1;
