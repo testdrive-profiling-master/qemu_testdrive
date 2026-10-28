@@ -31,7 +31,7 @@
 // OF SUCH DAMAGE.
 //
 // Title : QEMU for TestDrive
-// Rev.  : 10/22/2026 Thu (clonextop@gmail.com)
+// Rev.  : 10/28/2026 Wed (clonextop@gmail.com)
 //================================================================================
 #include "testdrive_device.h"
 
@@ -442,6 +442,11 @@ bool TestDrive::CreateBAR(const char *space_type, LuaRef byte_size, LuaRef bind_
 			return false;
 		}
 		bar.option.bar_type = iType;
+	} else {
+		// reset all BAR binding
+		m_BARs.clear();
+		memset(&testdrive_param.pci.bar, 0, sizeof(testdrive_param.pci.bar));
+		return true;
 	}
 	for (auto &i : m_BARs) {
 		bar.option.bar_id += i.second.option.b64bit ? 2 : 1;
@@ -685,5 +690,16 @@ bool TestDrive::RunScript(const char *sScriptFileName)
 		lua_pop(m_pLua, 1); // pop out error message
 		return false;
 	}
+	{
+		cstring sScript(m_pSystem->SimulationScript(SIMULATION_SCRIPT_QEMU));
+		if (!sScript.IsEmpty() && luaL_dostring(m_pLua, sScript)) {
+			// got error on script
+			const char *sError = luaL_checkstring(m_pLua, -1);
+			LOGE("Error on running script : %s", sError);
+			lua_pop(m_pLua, 1); // pop out error message
+			return false;
+		}
+	}
+
 	return true;
 }
